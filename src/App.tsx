@@ -8,6 +8,7 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Groups from './pages/Groups';
+import UploadResources from './pages/admin/UploadResources';
 import { useAuthStore } from './stores/authStore';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/groups" element={<Groups />} />
+          <Route path="/admin/resources" element={<UploadResources />} />
         </Route>
       </Routes>
     </Router>
