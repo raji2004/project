@@ -2,14 +2,48 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
+interface ValidationErrors {
+  email?: string;
+  password?: string;
+}
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const { signIn } = useAuthStore();
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    // Email validation
+    if (!email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation
+    if (!password) {
+      errors.password = 'Password is required';
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters long';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setValidationErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       await signIn(email, password);
     } catch (err) {
@@ -34,8 +68,12 @@ export default function Login() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className={`mt-1 block w-full rounded-md border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
+        {validationErrors.email && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+        )}
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -47,8 +85,12 @@ export default function Login() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className={`mt-1 block w-full rounded-md border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
+        {validationErrors.password && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+        )}
       </div>
       <div>
         <button

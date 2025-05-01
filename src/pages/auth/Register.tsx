@@ -2,16 +2,65 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
+interface ValidationErrors {
+  email?: string;
+  password?: string;
+  studentId?: string;
+}
+
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [studentId, setStudentId] = useState('');
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const { signUp } = useAuthStore();
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    // Email validation
+    if (!email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation
+    if (!password) {
+      errors.password = 'Password is required';
+    } else if (password.length < 8) {
+      errors.password = 'Password must be at least 8 characters long';
+    } else if (!/(?=.*[a-z])/.test(password)) {
+      errors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/(?=.*[A-Z])/.test(password)) {
+      errors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/(?=.*\d)/.test(password)) {
+      errors.password = 'Password must contain at least one number';
+    }
+
+    // Student ID validation
+    if (!studentId) {
+      errors.studentId = 'Student ID is required';
+    } else if (!/^\d+$/.test(studentId)) {
+      errors.studentId = 'Student ID must contain only numbers';
+    } else if (studentId.length < 6) {
+      errors.studentId = 'Student ID must be at least 6 digits long';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setValidationErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       await signUp(email, password, studentId);
     } catch (err) {
@@ -36,8 +85,12 @@ export default function Register() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className={`mt-1 block w-full rounded-md border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
+        {validationErrors.email && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+        )}
       </div>
       <div>
         <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
@@ -49,8 +102,12 @@ export default function Register() {
           required
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className={`mt-1 block w-full rounded-md border ${validationErrors.studentId ? 'border-red-500' : 'border-gray-300'
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
+        {validationErrors.studentId && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.studentId}</p>
+        )}
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -62,8 +119,12 @@ export default function Register() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className={`mt-1 block w-full rounded-md border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
+        {validationErrors.password && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+        )}
       </div>
       <div>
         <button
