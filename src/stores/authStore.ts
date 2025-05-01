@@ -10,7 +10,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       email,
       password,
     });
+    console.log("error", error);
     if (error) throw error;
+
     
     // Fetch user data after successful sign in
     const { data: { user: authUser } } = await supabase.auth.getUser();
