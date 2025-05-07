@@ -50,51 +50,44 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [studentId, setStudentId] = useState("");
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const { signUp } = useAuthStore();
 
   const passwordScore = getPasswordStrength(password);
   const strength = getStrengthLabel(passwordScore);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [error, setError] = useState('');
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const { signUp } = useAuthStore();
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
     // Email validation
     if (!email) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Please enter a valid email address';
+      errors.email = "Please enter a valid email address";
     }
 
     // Password validation
     if (!password) {
-      errors.password = 'Password is required';
+      errors.password = "Password is required";
     } else if (password.length < 8) {
-      errors.password = 'Password must be at least 8 characters long';
+      errors.password = "Password must be at least 8 characters long";
     } else if (!/(?=.*[a-z])/.test(password)) {
-      errors.password = 'Password must contain at least one lowercase letter';
+      errors.password = "Password must contain at least one lowercase letter";
     } else if (!/(?=.*[A-Z])/.test(password)) {
-      errors.password = 'Password must contain at least one uppercase letter';
+      errors.password = "Password must contain at least one uppercase letter";
     } else if (!/(?=.*\d)/.test(password)) {
-      errors.password = 'Password must contain at least one number';
+      errors.password = "Password must contain at least one number";
     }
 
     // Student ID validation
     if (!studentId) {
-      errors.studentId = 'Student ID is required';
+      errors.studentId = "Student ID is required";
     } else if (!/^\d+$/.test(studentId)) {
-      errors.studentId = 'Student ID must contain only numbers';
+      errors.studentId = "Student ID must contain only numbers";
     } else if (studentId.length < 6) {
-      errors.studentId = 'Student ID must be at least 6 digits long';
+      errors.studentId = "Student ID must be at least 6 digits long";
     }
 
     setValidationErrors(errors);
@@ -103,12 +96,13 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setValidationErrors({});
 
     if (!validateForm()) {
       return;
     }
+
     try {
       await signUp(email, password, studentId);
     } catch (err) {
@@ -140,8 +134,9 @@ export default function Register() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'
-            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+          className={`mt-1 block w-full rounded-md border ${
+            validationErrors.email ? "border-red-500" : "border-gray-300"
+          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
         {validationErrors.email && (
           <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
@@ -160,11 +155,14 @@ export default function Register() {
           required
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${validationErrors.studentId ? 'border-red-500' : 'border-gray-300'
-            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+          className={`mt-1 block w-full rounded-md border ${
+            validationErrors.studentId ? "border-red-500" : "border-gray-300"
+          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
         {validationErrors.studentId && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.studentId}</p>
+          <p className="mt-1 text-sm text-red-600">
+            {validationErrors.studentId}
+          </p>
         )}
       </div>
       <div>
@@ -180,8 +178,9 @@ export default function Register() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'
-            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+          className={`mt-1 block w-full rounded-md border ${
+            validationErrors.password ? "border-red-500" : "border-gray-300"
+          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
         />
         <div className="mt-2 flex items-center gap-2">
           <div className={`h-2 w-24 rounded ${strength.color}`}></div>
@@ -232,9 +231,10 @@ export default function Register() {
           </li>
         </ul>
         {validationErrors.password && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+          <p className="mt-1 text-sm text-red-600">
+            {validationErrors.password}
+          </p>
         )}
-
       </div>
       <div>
         <button
