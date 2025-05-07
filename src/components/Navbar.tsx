@@ -23,9 +23,21 @@ export default function Navbar() {
           <div className="flex">
             <Link to="/" className="flex items-center">
               <GraduationCap className="h-8 w-8 text-indigo-600" />
-              <span className="ml-2 text-xl font-bold text-gray-800">UniPlatform</span>
+              <span className="ml-2 text-xl font-bold text-gray-800">Freshers</span>
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link
+                to="Orientation"
+                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+              >
+                Orientation
+              </Link>
+              <Link
+                to="Resources"
+                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+              >
+                Resources
+              </Link>
               <Link
                 to="/"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"

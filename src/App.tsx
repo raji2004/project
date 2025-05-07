@@ -8,6 +8,8 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Groups from './pages/Groups';
+import Orientation from './pages/OrientationSub/Orientation';
+import Resources from './pages/ResourceSub/Resources';
 import { useAuthStore } from './stores/authStore';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/groups" element={<Groups />} />
+          <Route path="/orientation" element={<Orientation />} />
+          <Route path="/resources" element={<Resources />} />
         </Route>
       </Routes>
     </Router>
