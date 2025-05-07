@@ -1,21 +1,65 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
+import { CheckCircle } from "lucide-react";
+
+function getPasswordStrength(password: string) {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return score;
+}
+
+function getStrengthLabel(score: number) {
+  switch (score) {
+    case 0:
+    case 1:
+      return { label: "Very Weak", color: "bg-red-400", text: "text-red-700" };
+    case 2:
+      return { label: "Weak", color: "bg-orange-400", text: "text-orange-700" };
+    case 3:
+      return {
+        label: "Moderate",
+        color: "bg-yellow-400",
+        text: "text-yellow-700",
+      };
+    case 4:
+      return { label: "Strong", color: "bg-green-400", text: "text-green-700" };
+    case 5:
+      return {
+        label: "Very Strong",
+        color: "bg-blue-500",
+        text: "text-blue-700",
+      };
+    default:
+      return { label: "", color: "", text: "" };
+  }
+}
 
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [error, setError] = useState("");
   const { signUp } = useAuthStore();
+
+  const passwordScore = getPasswordStrength(password);
+  const strength = getStrengthLabel(passwordScore);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
       await signUp(email, password, studentId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again."
+      );
     }
   };
 
@@ -27,7 +71,10 @@ export default function Register() {
         </div>
       )}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700"
+        >
           Email address
         </label>
         <input
@@ -40,7 +87,10 @@ export default function Register() {
         />
       </div>
       <div>
-        <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="studentId"
+          className="block text-sm font-medium text-gray-700"
+        >
           Student ID
         </label>
         <input
@@ -53,7 +103,10 @@ export default function Register() {
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700"
+        >
           Password
         </label>
         <input
@@ -64,6 +117,54 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
         />
+        <div className="mt-2 flex items-center gap-2">
+          <div className={`h-2 w-24 rounded ${strength.color}`}></div>
+          <span className={`text-xs font-semibold ${strength.text}`}>
+            {strength.label}
+          </span>
+        </div>
+        <ul className="mt-2 text-xs text-gray-500 space-y-1">
+          <li className={password.length >= 8 ? "text-green-600" : ""}>
+            {password.length >= 8 ? (
+              <CheckCircle className="inline w-4 h-4 mr-1" />
+            ) : (
+              <span className="inline-block w-4 h-4 mr-1" />
+            )}
+            At least 8 characters
+          </li>
+          <li className={/[A-Z]/.test(password) ? "text-green-600" : ""}>
+            {/[A-Z]/.test(password) ? (
+              <CheckCircle className="inline w-4 h-4 mr-1" />
+            ) : (
+              <span className="inline-block w-4 h-4 mr-1" />
+            )}
+            One uppercase letter
+          </li>
+          <li className={/[a-z]/.test(password) ? "text-green-600" : ""}>
+            {/[a-z]/.test(password) ? (
+              <CheckCircle className="inline w-4 h-4 mr-1" />
+            ) : (
+              <span className="inline-block w-4 h-4 mr-1" />
+            )}
+            One lowercase letter
+          </li>
+          <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>
+            {/[0-9]/.test(password) ? (
+              <CheckCircle className="inline w-4 h-4 mr-1" />
+            ) : (
+              <span className="inline-block w-4 h-4 mr-1" />
+            )}
+            One number
+          </li>
+          <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>
+            {/[^A-Za-z0-9]/.test(password) ? (
+              <CheckCircle className="inline w-4 h-4 mr-1" />
+            ) : (
+              <span className="inline-block w-4 h-4 mr-1" />
+            )}
+            One special character
+          </li>
+        </ul>
       </div>
       <div>
         <button
@@ -74,7 +175,10 @@ export default function Register() {
         </button>
       </div>
       <div className="text-sm text-center">
-        <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link
+          to="/login"
+          className="font-medium text-indigo-600 hover:text-indigo-500"
+        >
           Already have an account? Sign in here
         </Link>
       </div>
