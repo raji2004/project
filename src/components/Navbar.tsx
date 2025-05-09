@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { GraduationCap, User, BookOpen, Calendar, Users, Bell, LogOut } from 'lucide-react';
+import { GraduationCap, User, BookOpen, Calendar, Users, Bell, LogOut, Upload } from 'lucide-react';
+import { isAdmin } from '../config/admin';
 
 export default function Navbar() {
   const { user, signOut } = useAuthStore();
@@ -59,6 +60,15 @@ export default function Navbar() {
                 <Users className="h-4 w-4 mr-1" />
                 Groups
               </Link>
+              {isAdmin(user?.email) && (
+                <Link
+                  to="/admin/resources"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Admin
+                </Link>
+              )}
             </div>
           </div>
           <div className="flex items-center">
