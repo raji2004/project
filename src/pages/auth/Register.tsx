@@ -50,6 +50,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [studentId, setStudentId] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
@@ -97,6 +98,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
     setValidationErrors({});
 
     if (!validateForm()) {
@@ -105,6 +107,11 @@ export default function Register() {
 
     try {
       await signUp(email, password, studentId);
+      setSuccess(true);
+      // Clear form after successful registration
+      setEmail("");
+      setPassword("");
+      setStudentId("");
     } catch (err) {
       setError(
         err instanceof Error
@@ -121,129 +128,150 @@ export default function Register() {
           {error}
         </div>
       )}
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Email address
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${
-            validationErrors.email ? "border-red-500" : "border-gray-300"
-          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
-        />
-        {validationErrors.email && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
-        )}
-      </div>
-      <div>
-        <label
-          htmlFor="studentId"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Student ID
-        </label>
-        <input
-          id="studentId"
-          type="text"
-          required
-          value={studentId}
-          onChange={(e) => setStudentId(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${
-            validationErrors.studentId ? "border-red-500" : "border-gray-300"
-          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
-        />
-        {validationErrors.studentId && (
-          <p className="mt-1 text-sm text-red-600">
-            {validationErrors.studentId}
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
+          <p className="font-medium">Registration successful!</p>
+          <p className="mt-1">
+            Please check your email ({email}) to verify your account. You won't
+            be able to log in until you verify your email address.
           </p>
-        )}
-      </div>
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${
-            validationErrors.password ? "border-red-500" : "border-gray-300"
-          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
-        />
-        <div className="mt-2 flex items-center gap-2">
-          <div className={`h-2 w-24 rounded ${strength.color}`}></div>
-          <span className={`text-xs font-semibold ${strength.text}`}>
-            {strength.label}
-          </span>
         </div>
-        <ul className="mt-2 text-xs text-gray-500 space-y-1">
-          <li className={password.length >= 8 ? "text-green-600" : ""}>
-            {password.length >= 8 ? (
-              <CheckCircle className="inline w-4 h-4 mr-1" />
-            ) : (
-              <span className="inline-block w-4 h-4 mr-1" />
+      )}
+      {!success && (
+        <>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email address
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`mt-1 block w-full rounded-md border ${
+                validationErrors.email ? "border-red-500" : "border-gray-300"
+              } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+            />
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.email}
+              </p>
             )}
-            At least 8 characters
-          </li>
-          <li className={/[A-Z]/.test(password) ? "text-green-600" : ""}>
-            {/[A-Z]/.test(password) ? (
-              <CheckCircle className="inline w-4 h-4 mr-1" />
-            ) : (
-              <span className="inline-block w-4 h-4 mr-1" />
+          </div>
+          <div>
+            <label
+              htmlFor="studentId"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Student ID
+            </label>
+            <input
+              id="studentId"
+              type="text"
+              required
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className={`mt-1 block w-full rounded-md border ${
+                validationErrors.studentId
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+            />
+            {validationErrors.studentId && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.studentId}
+              </p>
             )}
-            One uppercase letter
-          </li>
-          <li className={/[a-z]/.test(password) ? "text-green-600" : ""}>
-            {/[a-z]/.test(password) ? (
-              <CheckCircle className="inline w-4 h-4 mr-1" />
-            ) : (
-              <span className="inline-block w-4 h-4 mr-1" />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`mt-1 block w-full rounded-md border ${
+                validationErrors.password ? "border-red-500" : "border-gray-300"
+              } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <div className={`h-2 w-24 rounded ${strength.color}`}></div>
+              <span className={`text-xs font-semibold ${strength.text}`}>
+                {strength.label}
+              </span>
+            </div>
+            <ul className="mt-2 text-xs text-gray-500 space-y-1">
+              <li className={password.length >= 8 ? "text-green-600" : ""}>
+                {password.length >= 8 ? (
+                  <CheckCircle className="inline w-4 h-4 mr-1" />
+                ) : (
+                  <span className="inline-block w-4 h-4 mr-1" />
+                )}
+                At least 8 characters
+              </li>
+              <li className={/[A-Z]/.test(password) ? "text-green-600" : ""}>
+                {/[A-Z]/.test(password) ? (
+                  <CheckCircle className="inline w-4 h-4 mr-1" />
+                ) : (
+                  <span className="inline-block w-4 h-4 mr-1" />
+                )}
+                One uppercase letter
+              </li>
+              <li className={/[a-z]/.test(password) ? "text-green-600" : ""}>
+                {/[a-z]/.test(password) ? (
+                  <CheckCircle className="inline w-4 h-4 mr-1" />
+                ) : (
+                  <span className="inline-block w-4 h-4 mr-1" />
+                )}
+                One lowercase letter
+              </li>
+              <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>
+                {/[0-9]/.test(password) ? (
+                  <CheckCircle className="inline w-4 h-4 mr-1" />
+                ) : (
+                  <span className="inline-block w-4 h-4 mr-1" />
+                )}
+                One number
+              </li>
+              <li
+                className={
+                  /[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""
+                }
+              >
+                {/[^A-Za-z0-9]/.test(password) ? (
+                  <CheckCircle className="inline w-4 h-4 mr-1" />
+                ) : (
+                  <span className="inline-block w-4 h-4 mr-1" />
+                )}
+                One special character
+              </li>
+            </ul>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.password}
+              </p>
             )}
-            One lowercase letter
-          </li>
-          <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>
-            {/[0-9]/.test(password) ? (
-              <CheckCircle className="inline w-4 h-4 mr-1" />
-            ) : (
-              <span className="inline-block w-4 h-4 mr-1" />
-            )}
-            One number
-          </li>
-          <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>
-            {/[^A-Za-z0-9]/.test(password) ? (
-              <CheckCircle className="inline w-4 h-4 mr-1" />
-            ) : (
-              <span className="inline-block w-4 h-4 mr-1" />
-            )}
-            One special character
-          </li>
-        </ul>
-        {validationErrors.password && (
-          <p className="mt-1 text-sm text-red-600">
-            {validationErrors.password}
-          </p>
-        )}
-      </div>
-      <div>
-        <button
-          type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Register
-        </button>
-      </div>
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Register
+            </button>
+          </div>
+        </>
+      )}
       <div className="text-sm text-center">
         <Link
           to="/login"
