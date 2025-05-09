@@ -18,7 +18,7 @@ export default function AuthLayout() {
           <GraduationCap className="h-12 w-12 text-indigo-600" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          University Platform
+         Freshers
         </h2>
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
