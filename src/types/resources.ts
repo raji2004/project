@@ -24,4 +24,12 @@ export interface ResourcesState {
   fetchDepartments: () => Promise<void>;
   fetchResourcesByDepartment: (departmentId: string) => Promise<void>;
   setSelectedDepartment: (departmentId: string | null) => void;
+  uploadResource: (resource: {
+    department_id: string;
+    title: string;
+    description: string | null;
+    file: File;
+    type: 'pdf' | 'video' | 'link';
+  }) => Promise<void>;
+  deleteResource: (resourceId: string, departmentId: string) => Promise<void>;
 }
