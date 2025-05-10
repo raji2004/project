@@ -7,12 +7,12 @@ import Register from "./pages/auth/Register";
 import AuthCallback from "./pages/auth/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import Groups from "./pages/Groups";
+import ChatForum from "./pages/chatforum";
 import Orientation from "./pages/OrientationSub/Orientation";
 import Resources from "./pages/ResourceSub/Resources";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
-
+import Homepage from "./pages/Homepage/page";
 function App() {
   const { initializeAuth } = useAuthStore();
 
@@ -29,9 +29,10 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
         </Route>
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Homepage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/groups" element={<Groups />} />
+          <Route path="/chat-forum" element={<ChatForum />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/resources" element={<Resources />} />

@@ -1,19 +1,31 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import { GraduationCap, User, BookOpen, Calendar, Users, Bell, LogOut, Upload } from 'lucide-react';
-import { isAdmin } from '../config/admin';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
+import {
+  GraduationCap,
+  User,
+  BookOpen,
+  Calendar,
+  Users,
+  Bell,
+  LogOut,
+  Upload,
+} from "lucide-react";
+import { isAdmin } from "../config/admin";
+import { getAvatarUrl } from "../utils/avatar";
 
 export default function Navbar() {
   const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
 
+  const avatarUrl = user?.avatar_url ? getAvatarUrl(user.avatar_url) : null;
+
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -24,7 +36,9 @@ export default function Navbar() {
           <div className="flex">
             <Link to="/" className="flex items-center">
               <GraduationCap className="h-8 w-8 text-indigo-600" />
-              <span className="ml-2 text-xl font-bold text-gray-800">Freshers</span>
+              <span className="ml-2 text-xl font-bold text-gray-800">
+                Freshers
+              </span>
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link
@@ -40,7 +54,7 @@ export default function Navbar() {
                 Resources
               </Link>
               <Link
-                to="/"
+                to="/dashboard"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
               >
                 <BookOpen className="h-4 w-4 mr-1" />
@@ -54,11 +68,11 @@ export default function Navbar() {
                 Schedule
               </Link>
               <Link
-                to="/groups"
+                to="/chat-forum"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
               >
                 <Users className="h-4 w-4 mr-1" />
-                Groups
+                Chat Forum
               </Link>
               {isAdmin(user?.email) && (
                 <Link
@@ -80,7 +94,19 @@ export default function Navbar() {
                 to="/profile"
                 className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900"
               >
-                <User className="h-6 w-6" />
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="h-8 w-8 rounded-full object-cover border shadow"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "";
+                    }}
+                  />
+                ) : (
+                  <User className="h-6 w-6" />
+                )}
               </Link>
               <button
                 onClick={handleSignOut}
