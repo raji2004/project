@@ -1,13 +1,14 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import Navbar from '../components/Navbar';
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
+import Navbar from "../components/Navbar";
+import Spinner from "../components/Spinner";
 
 export default function MainLayout() {
   const { user, loading } = useAuthStore();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Spinner />;
   }
 
   if (!user) {
