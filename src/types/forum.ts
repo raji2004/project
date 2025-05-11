@@ -8,6 +8,7 @@ export interface ForumPost {
   author?: {
     full_name: string;
     student_id: string;
+    avatar_url?: string;
   };
   comments_count?: number;
 }
@@ -22,7 +23,15 @@ export interface ForumComment {
   author?: {
     full_name: string;
     student_id: string;
+    avatar_url?: string;
   };
+  resources?: ForumResource[] | string;
+}
+
+export interface ForumResource {
+  type: "image" | "video" | "file" | "link";
+  url: string;
+  name?: string;
 }
 
 export interface ForumState {
@@ -35,7 +44,11 @@ export interface ForumState {
   fetchPost: (postId: string) => Promise<void>;
   fetchComments: (postId: string) => Promise<void>;
   createPost: (title: string, content: string) => Promise<void>;
-  createComment: (postId: string, content: string) => Promise<void>;
+  createComment: (
+    postId: string,
+    content: string,
+    resources?: ForumResource[]
+  ) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
 }
