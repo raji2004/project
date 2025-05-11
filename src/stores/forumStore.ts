@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
-import type { ForumState, ForumPost, ForumComment } from '../types/forum';
+import { create } from "zustand";
+import { supabase } from "../lib/supabase";
+import type { ForumState, ForumPost, ForumComment } from "../types/forum";
 
 export const useForumStore = create<ForumState>((set, get) => ({
   posts: [],
@@ -13,18 +13,20 @@ export const useForumStore = create<ForumState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data, error } = await supabase
-        .from('forum_posts')
-        .select(`
+        .from("forum_posts")
+        .select(
+          `
           *,
-          author:profiles(full_name, student_id),
+          author:profiles(full_name, student_id, avatar_url),
           comments_count:forum_comments(count)
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       set({ posts: data || [] });
     } catch (error) {
-      set({ error: 'Failed to fetch posts' });
+      set({ error: "Failed to fetch posts" });
     } finally {
       set({ loading: false });
     }
@@ -34,18 +36,20 @@ export const useForumStore = create<ForumState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data, error } = await supabase
-        .from('forum_posts')
-        .select(`
+        .from("forum_posts")
+        .select(
+          `
           *,
-          author:profiles(full_name, student_id)
-        `)
-        .eq('id', postId)
+          author:profiles(full_name, student_id, avatar_url)
+        `
+        )
+        .eq("id", postId)
         .single();
 
       if (error) throw error;
       set({ selectedPost: data });
     } catch (error) {
-      set({ error: 'Failed to fetch post' });
+      set({ error: "Failed to fetch post" });
     } finally {
       set({ loading: false });
     }
@@ -55,18 +59,20 @@ export const useForumStore = create<ForumState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data, error } = await supabase
-        .from('forum_comments')
-        .select(`
+        .from("forum_comments")
+        .select(
+          `
           *,
-          author:profiles(full_name, student_id)
-        `)
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+          author:profiles(full_name, student_id, avatar_url)
+        `
+        )
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       set({ comments: data || [] });
     } catch (error) {
-      set({ error: 'Failed to fetch comments' });
+      set({ error: "Failed to fetch comments" });
     } finally {
       set({ loading: false });
     }
@@ -75,44 +81,54 @@ export const useForumStore = create<ForumState>((set, get) => ({
   createPost: async (title: string, content: string) => {
     set({ loading: true, error: null });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase
-        .from('forum_posts')
-        .insert([{ 
-          title, 
+      const { error } = await supabase.from("forum_posts").insert([
+        {
+          title,
           content,
-          author_id: user.id 
-        }]);
+          author_id: user.id,
+        },
+      ]);
 
       if (error) throw error;
       await get().fetchPosts();
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to create post' });
+      set({
+        error: error instanceof Error ? error.message : "Failed to create post",
+      });
     } finally {
       set({ loading: false });
     }
   },
 
-  createComment: async (postId: string, content: string) => {
+  createComment: async (postId: string, content: string, resources?: any[]) => {
     set({ loading: true, error: null });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase
-        .from('forum_comments')
-        .insert([{ 
-          post_id: postId, 
+      const { error } = await supabase.from("forum_comments").insert([
+        {
+          post_id: postId,
           content,
-          author_id: user.id 
-        }]);
+          author_id: user.id,
+          resources: resources ? JSON.stringify(resources) : null,
+        },
+      ]);
 
       if (error) throw error;
       await get().fetchComments(postId);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to create comment' });
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to create comment",
+      });
     } finally {
       set({ loading: false });
     }
@@ -122,15 +138,15 @@ export const useForumStore = create<ForumState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { error } = await supabase
-        .from('forum_posts')
+        .from("forum_posts")
         .delete()
-        .eq('id', postId);
+        .eq("id", postId);
 
       if (error) throw error;
       await get().fetchPosts();
       set({ selectedPost: null });
     } catch (error) {
-      set({ error: 'Failed to delete post' });
+      set({ error: "Failed to delete post" });
     } finally {
       set({ loading: false });
     }
@@ -140,9 +156,9 @@ export const useForumStore = create<ForumState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { error } = await supabase
-        .from('forum_comments')
+        .from("forum_comments")
         .delete()
-        .eq('id', commentId);
+        .eq("id", commentId);
 
       if (error) throw error;
       const selectedPost = get().selectedPost;
@@ -150,7 +166,7 @@ export const useForumStore = create<ForumState>((set, get) => ({
         await get().fetchComments(selectedPost.id);
       }
     } catch (error) {
-      set({ error: 'Failed to delete comment' });
+      set({ error: "Failed to delete comment" });
     } finally {
       set({ loading: false });
     }
