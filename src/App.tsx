@@ -1,5 +1,10 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/auth/Login";
@@ -13,6 +18,25 @@ import Resources from "./pages/ResourceSub/Resources";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
 import Homepage from "./pages/Homepage/page";
+import AdminLogin from "./pages/admin/AdminLogin";
+import UploadResources from "./pages/admin/UploadResources";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminForum from "./pages/admin/AdminForum";
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuthStore();
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "admin")
+    return (
+      <div className="p-8 text-center text-red-600">
+        Access denied. Admins only.
+      </div>
+    );
+  return <>{children}</>;
+}
+
 function App() {
   const { initializeAuth } = useAuthStore();
 
@@ -36,6 +60,35 @@ function App() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/resources" element={<Resources />} />
+        </Route>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/upload-resources"
+          element={
+            <AdminRoute>
+              <UploadResources />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <div className="text-2xl font-bold text-purple-700">
+                Welcome to the Admin Dashboard
+              </div>
+            }
+          />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="upload-resources" element={<UploadResources />} />
+          <Route path="forum" element={<AdminForum />} />
         </Route>
       </Routes>
     </Router>
