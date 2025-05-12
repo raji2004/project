@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { Shield } from "lucide-react";
 
 interface ValidationErrors {
   email?: string;
@@ -22,6 +23,7 @@ export default function Login() {
   const { signIn } = useAuthStore();
   const location = useLocation();
   const state = location.state as LocationState;
+  const navigate = useNavigate();
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
@@ -55,88 +57,101 @@ export default function Login() {
 
     try {
       await signIn(email, password);
-    } catch (err) {
+    } catch {
       setError("Invalid email or password");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {state?.message && (
-        <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
-          {state.message}
-        </div>
-      )}
-      {state?.error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {state.error}
-        </div>
-      )}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Email address
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${
-            validationErrors.email ? "border-red-500" : "border-gray-300"
-          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
-        />
-        {validationErrors.email && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+    <div className="relative">
+      {/* Admin icon top-right */}
+      <button
+        type="button"
+        onClick={() => navigate("/admin/login")}
+        className="absolute right-0 -top-12 md:top-0 md:right-2 p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 shadow transition-colors"
+        title="Admin Login"
+      >
+        <Shield className="h-6 w-6" />
+      </button>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {state?.message && (
+          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
+            {state.message}
+          </div>
         )}
-      </div>
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md border ${
-            validationErrors.password ? "border-red-500" : "border-gray-300"
-          } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
-        />
-        {validationErrors.password && (
-          <p className="mt-1 text-sm text-red-600">
-            {validationErrors.password}
-          </p>
+        {state?.error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+            {state.error}
+          </div>
         )}
-      </div>
-      <div>
-        <button
-          type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Sign in
-        </button>
-      </div>
-      <div className="text-sm text-center">
-        <Link
-          to="/register"
-          className="font-medium text-indigo-600 hover:text-indigo-500"
-        >
-          Don't have an account? Sign up here
-        </Link>
-      </div>
-    </form>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Email address
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={`mt-1 block w-full rounded-md border ${
+              validationErrors.email ? "border-red-500" : "border-gray-300"
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+          />
+          {validationErrors.email && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.email}
+            </p>
+          )}
+        </div>
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`mt-1 block w-full rounded-md border ${
+              validationErrors.password ? "border-red-500" : "border-gray-300"
+            } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+          />
+          {validationErrors.password && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.password}
+            </p>
+          )}
+        </div>
+        <div>
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Sign in
+          </button>
+        </div>
+        <div className="text-sm text-center">
+          <Link
+            to="/register"
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            Don't have an account? Sign up here
+          </Link>
+        </div>
+      </form>
+    </div>
   );
 }
