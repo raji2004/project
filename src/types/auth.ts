@@ -6,6 +6,7 @@ export interface User {
   avatar_url?: string;
   department_id?: string;
   created_at: string;
+  role?: string;
 }
 
 export interface AuthState {
