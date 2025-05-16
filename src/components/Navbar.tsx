@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import { getAvatarUrl } from "../utils/avatar";
 import {
   GraduationCap,
   User,
@@ -11,12 +12,11 @@ import {
   LogOut,
   Upload,
 } from "lucide-react";
-import { isAdmin } from "../config/admin";
-import { getAvatarUrl } from "../utils/avatar";
 
 export default function Navbar() {
   const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
+  const isAdmin = user?.role === "admin";
 
   const avatarUrl = user?.avatar_url ? getAvatarUrl(user.avatar_url) : null;
 
@@ -74,9 +74,9 @@ export default function Navbar() {
                 <Users className="h-4 w-4 mr-1" />
                 Chat Forum
               </Link>
-              {isAdmin(user?.email) && (
+              {isAdmin && (
                 <Link
-                  to="/admin/resources"
+                  to="/admin/upload-resources"
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
                 >
                   <Upload className="h-4 w-4 mr-1" />
