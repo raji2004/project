@@ -14,7 +14,11 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ChatForum from "./pages/chatforum";
 import Orientation from "./pages/OrientationSub/Orientation";
+import OrientationGuide from "./pages/OrientationSub/OrientationGuide";
+import OrientationVids from "./pages/OrientationSub/OrientationVids";
 import Resources from "./pages/ResourceSub/Resources";
+import ResourcesLibrary from "./pages/ResourceSub/ResourcesLibrary";
+import ResourcesPQ from "./pages/ResourceSub/ResourcesPQ";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
 import Homepage from "./pages/Homepage/page";
@@ -59,7 +63,11 @@ function App() {
           <Route path="/chat-forum" element={<ChatForum />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/orientation" element={<Orientation />} />
+          <Route path="/orientationguide" element={<OrientationGuide />} />
+          <Route path="/orientationvids" element={<OrientationVids />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/resourceslibrary" element={<ResourcesLibrary />} />
+          <Route path="/resourcespq" element={<ResourcesPQ />} />
         </Route>
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
