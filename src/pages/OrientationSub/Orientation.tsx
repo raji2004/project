@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function Orientation() {
   
   return (
-    <div className='shadow-lg bg-violet-200 p-8 grid md:grid-cols-2'>
+    <div className='shadow-lg bg-violet-50 p-8 grid md:grid-cols-2'>
       <div className='container justify-start col'>
         <div className='container w-auto mb-4'>
           <div className='font-serif text-6xl text-black font-medium'>Welcome to <br/> Nile University <br/> Orientation Portal</div>
