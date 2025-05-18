@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,6 +21,7 @@ import ResourcesLibrary from "./pages/ResourceSub/ResourcesLibrary";
 import ResourcesPQ from "./pages/ResourceSub/ResourcesPQ";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
+import AdminEvents from "./pages/admin/AdminEvents";
 import Homepage from "./pages/Homepage/page";
 import AdminLogin from "./pages/admin/AdminLogin";
 import UploadResources from "./pages/admin/UploadResources";
@@ -48,6 +49,14 @@ function App() {
     initializeAuth();
   }, [initializeAuth]);
 
+  const [events, setEvents] = useState([]);
+
+  /*Added Code*/
+  const handleAddEvent = (newEvent) => {
+    setEvents([events, newEvent]);
+  };
+  /*End of Added. Please link to db*/
+
   return (
     <Router>
       <Routes>
@@ -61,7 +70,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat-forum" element={<ChatForum />} />
-          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/schedule" element={<Schedule events={events} />} /> {/*Added events={events}*/}
+          <Route path="/adminevent" element={<AdminEvents onAddEvent={handleAddEvent} />} /> {/*This is the added file for the admin page*/}
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/orientationguide" element={<OrientationGuide />} />
           <Route path="/orientationvids" element={<OrientationVids />} />
