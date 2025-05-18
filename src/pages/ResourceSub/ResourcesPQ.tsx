@@ -82,7 +82,6 @@ export default function ResourcesPQ() {
         </div>
 
       </div>
-
     </div>
   );
 }

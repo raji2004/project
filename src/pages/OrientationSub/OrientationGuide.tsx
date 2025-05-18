@@ -6,6 +6,7 @@ import SidebarO from './SidebarO';
 export default function OrientationGuide() {
   
   return (
+
     <div className='container flex flex-wrap'>
       <SidebarO/>
 
@@ -100,7 +101,6 @@ export default function OrientationGuide() {
         </div>
 
       </div>
-
     </div>
   );
 }

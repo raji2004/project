@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
-  FileText,
   CheckCircle,
   XCircle,
   Download,
   Search,
-  Filter,
   Trash2,
+  Upload,
 } from "lucide-react";
+import { useResourcesStore } from "../../stores/resourcesStore";
 
 interface Resource {
   id: string;
@@ -35,9 +35,26 @@ export default function AdminResources() {
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Batch upload state
+  const { departments, fetchDepartments, uploadResource } = useResourcesStore();
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchDepartment, setBatchDepartment] = useState("");
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchDetails, setBatchDetails] = useState<BatchDetail[]>([]);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchError, setBatchError] = useState("");
+  const [batchSuccess, setBatchSuccess] = useState("");
+
+  interface BatchDetail {
+    title: string;
+    description: string;
+    type: "pdf" | "video" | "link";
+  }
+
   useEffect(() => {
     fetchResources();
-  }, []);
+    fetchDepartments();
+  }, [fetchDepartments]);
 
   async function fetchResources() {
     setLoading(true);
@@ -138,6 +155,53 @@ export default function AdminResources() {
         resource.author.full_name.toLowerCase().includes(search.toLowerCase()))
   );
 
+  // When files are selected, initialize details
+  function handleBatchFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    setBatchFiles(files);
+    setBatchDetails(
+      files.map((f) => ({ title: f.name, description: "", type: "pdf" }))
+    );
+  }
+
+  function handleBatchDetailChange(idx: number, field: string, value: string) {
+    setBatchDetails((details) =>
+      details.map((d, i) => (i === idx ? { ...d, [field]: value } : d))
+    );
+  }
+
+  async function handleBatchUpload() {
+    setBatchUploading(true);
+    setBatchError("");
+    setBatchSuccess("");
+    if (!batchDepartment) {
+      setBatchError("Please select a department.");
+      setBatchUploading(false);
+      return;
+    }
+    let anyError = false;
+    for (let i = 0; i < batchFiles.length; i++) {
+      const file = batchFiles[i];
+      const details = batchDetails[i];
+      try {
+        await uploadResource({
+          department_id: batchDepartment,
+          title: details.title,
+          description: details.description,
+          file,
+          type: details.type,
+        });
+      } catch {
+        anyError = true;
+      }
+    }
+    setBatchUploading(false);
+    if (anyError) setBatchError("Some files failed to upload.");
+    else setBatchSuccess("All files uploaded successfully!");
+    setBatchFiles([]);
+    setBatchDetails([]);
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -151,6 +215,123 @@ export default function AdminResources() {
       <h1 className="text-2xl font-bold text-purple-700">
         Resource Management
       </h1>
+
+      {/* Batch Upload Section */}
+      <div className="mb-4">
+        <button
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+          onClick={() => setBatchOpen((open) => !open)}
+        >
+          {batchOpen ? "Close Batch Upload" : "Batch Upload"}
+        </button>
+        {batchOpen && (
+          <div className="mt-4 p-4 bg-white rounded shadow border border-purple-100">
+            <div className="mb-4">
+              <label className="block font-medium mb-1">Department</label>
+              <select
+                value={batchDepartment}
+                onChange={(e) => setBatchDepartment(e.target.value)}
+                className="w-full rounded border px-3 py-2"
+              >
+                <option value="">Select a department</option>
+                {departments.map((dept: { id: string; name: string }) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block font-medium mb-1">Select Files</label>
+              <input
+                type="file"
+                multiple
+                onChange={handleBatchFiles}
+                className="block w-full"
+              />
+            </div>
+            {batchFiles.length > 0 && (
+              <div className="space-y-4">
+                {batchFiles.map((file, idx) => (
+                  <div key={idx} className="p-2 border rounded mb-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold">{file.name}</span>
+                      <button
+                        className="ml-auto text-red-500 hover:underline"
+                        onClick={() => {
+                          setBatchFiles((files) =>
+                            files.filter((_, i) => i !== idx)
+                          );
+                          setBatchDetails((details) =>
+                            details.filter((_, i) => i !== idx)
+                          );
+                        }}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={batchDetails[idx]?.title || ""}
+                      onChange={(e) =>
+                        handleBatchDetailChange(idx, "title", e.target.value)
+                      }
+                      className="w-full mb-2 rounded border px-2 py-1"
+                    />
+                    <textarea
+                      placeholder="Description (optional)"
+                      value={batchDetails[idx]?.description || ""}
+                      onChange={(e) =>
+                        handleBatchDetailChange(
+                          idx,
+                          "description",
+                          e.target.value
+                        )
+                      }
+                      className="w-full mb-2 rounded border px-2 py-1"
+                    />
+                    <select
+                      value={batchDetails[idx]?.type || "pdf"}
+                      onChange={(e) =>
+                        handleBatchDetailChange(idx, "type", e.target.value)
+                      }
+                      className="w-full rounded border px-2 py-1"
+                    >
+                      <option value="pdf">PDF Document</option>
+                      <option value="video">Video</option>
+                      <option value="link">External Link</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+            {batchError && (
+              <div className="text-red-600 mt-2">{batchError}</div>
+            )}
+            {batchSuccess && (
+              <div className="text-green-600 mt-2">{batchSuccess}</div>
+            )}
+            <button
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center"
+              onClick={handleBatchUpload}
+              disabled={
+                batchUploading || !batchDepartment || batchFiles.length === 0
+              }
+            >
+              {batchUploading ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload All
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Filters and Actions */}
       <div className="flex flex-wrap gap-4 items-center">

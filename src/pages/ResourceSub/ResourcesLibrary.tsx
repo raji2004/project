@@ -82,7 +82,6 @@ export default function ResourcesLibrary() {
         </div>
 
       </div>
-
     </div>
   );
 }
