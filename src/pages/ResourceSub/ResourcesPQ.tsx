@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ResourcesLibrary() {
+export default function ResourcesPQ() {
   
   return (
     <div className='shadow-lg bg-violet-200 p-8 grid md:grid-cols-2'>
