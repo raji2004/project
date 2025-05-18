@@ -22,7 +22,6 @@ import ResourcesPQ from "./pages/ResourceSub/ResourcesPQ";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
 import Homepage from "./pages/Homepage/page";
-import AdminLogin from "./pages/admin/AdminLogin";
 import UploadResources from "./pages/admin/UploadResources";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -69,15 +68,6 @@ function App() {
           <Route path="/resourceslibrary" element={<ResourcesLibrary />} />
           <Route path="/resourcespq" element={<ResourcesPQ />} />
         </Route>
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin/upload-resources"
-          element={
-            <AdminRoute>
-              <UploadResources />
-            </AdminRoute>
-          }
-        />
         <Route
           path="/admin"
           element={

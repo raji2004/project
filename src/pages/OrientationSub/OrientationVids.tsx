@@ -100,7 +100,6 @@ export default function OrientationVids() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }
