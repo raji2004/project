@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   CheckCircle,
@@ -9,6 +9,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useResourcesStore } from "../../stores/resourcesStore";
+import { AdminLoadingContext } from "./AdminLayout";
 
 interface Resource {
   id: string;
@@ -19,14 +20,25 @@ interface Resource {
   downloads: number;
   status: "pending" | "approved" | "rejected";
   created_at: string;
-  author: {
-    full_name: string;
-  };
+  flow: string;
+  department_id: string;
+}
+
+interface ValidationErrors {
+  department?: string;
+  title?: string;
+  file?: string;
+  type?: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
 }
 
 export default function AdminResources() {
+  console.log("AdminResources rendered");
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -45,6 +57,24 @@ export default function AdminResources() {
   const [batchError, setBatchError] = useState("");
   const [batchSuccess, setBatchSuccess] = useState("");
 
+  const { setGlobalLoading } = useContext(AdminLoadingContext);
+
+  const [flowFilter, setFlowFilter] = useState<string>("all");
+
+  // Add upload form state and logic
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [type, setType] = useState<"pdf" | "video" | "link">("pdf");
+  const [flow, setFlow] = useState<string>("resources");
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState("");
+
   interface BatchDetail {
     title: string;
     description: string;
@@ -57,21 +87,34 @@ export default function AdminResources() {
   }, [fetchDepartments]);
 
   async function fetchResources() {
-    setLoading(true);
+    setGlobalLoading(true);
     setError("");
     try {
-      const { data, error } = await supabase
-        .from("resources")
-        .select("*, author:profiles!inner(full_name)")
+      console.log(
+        "[AdminResources] Fetching resources with flowFilter:",
+        flowFilter
+      );
+      let query = supabase
+        .from("lecture_resources")
+        .select("*")
         .order("created_at", { ascending: false });
+
+      if (flowFilter !== "all") {
+        query = query.eq("flow", flowFilter);
+      }
+
+      console.log("[AdminResources] Supabase query:", query);
+      const { data, error } = await query;
+      console.log("[AdminResources] Supabase data:", data);
+      console.log("[AdminResources] Supabase error:", error);
 
       if (error) throw error;
       setResources(data || []);
     } catch (err) {
       setError("Failed to fetch resources");
-      console.error(err);
+      console.error("[AdminResources] Fetch error:", err);
     }
-    setLoading(false);
+    setGlobalLoading(false);
   }
 
   async function updateResourceStatus(
@@ -81,7 +124,7 @@ export default function AdminResources() {
     setActionLoading(resourceId);
     try {
       const { error } = await supabase
-        .from("resources")
+        .from("lecture_resources")
         .update({ status })
         .eq("id", resourceId);
 
@@ -98,7 +141,7 @@ export default function AdminResources() {
     setActionLoading(resourceId);
     try {
       const { error } = await supabase
-        .from("resources")
+        .from("lecture_resources")
         .delete()
         .eq("id", resourceId);
 
@@ -115,7 +158,7 @@ export default function AdminResources() {
     setActionLoading("bulk-update");
     try {
       const { error } = await supabase
-        .from("resources")
+        .from("lecture_resources")
         .update({ status })
         .in("id", selectedResources);
 
@@ -133,7 +176,7 @@ export default function AdminResources() {
     setActionLoading("bulk-delete");
     try {
       const { error } = await supabase
-        .from("resources")
+        .from("lecture_resources")
         .delete()
         .in("id", selectedResources);
 
@@ -151,8 +194,7 @@ export default function AdminResources() {
     (resource) =>
       (statusFilter === "all" || resource.status === statusFilter) &&
       (resource.title.toLowerCase().includes(search.toLowerCase()) ||
-        resource.description.toLowerCase().includes(search.toLowerCase()) ||
-        resource.author.full_name.toLowerCase().includes(search.toLowerCase()))
+        resource.description.toLowerCase().includes(search.toLowerCase()))
   );
 
   // When files are selected, initialize details
@@ -202,19 +244,194 @@ export default function AdminResources() {
     setBatchDetails([]);
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
-      </div>
-    );
+  function validateForm() {
+    const errors: ValidationErrors = {};
+    if (!selectedDepartment) errors.department = "Please select a department";
+    if (!title.trim()) errors.title = "Title is required";
+    if (!file && type !== "link") errors.file = "Please select a file";
+    if (!type) errors.type = "Please select a resource type";
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  async function handleUploadSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setValidationErrors({});
+    setUploadError("");
+    setUploadSuccess("");
+    if (!validateForm() || !file) return;
+    setUploading(true);
+    try {
+      // Upload file to Supabase Storage
+      let fileUrl = "";
+      if (file) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("resources")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+        fileUrl = supabase.storage.from("resources").getPublicUrl(fileName)
+          .data.publicUrl;
+      }
+      // Insert into lecture_resources
+      const { error: insertError } = await supabase
+        .from("lecture_resources")
+        .insert([
+          {
+            department_id: selectedDepartment,
+            title,
+            description,
+            file_url: fileUrl,
+            file_type: type,
+            flow,
+            status: "pending",
+            downloads: 0,
+          },
+        ]);
+      if (insertError) throw insertError;
+      setUploadSuccess("Resource uploaded successfully!");
+      setTitle("");
+      setDescription("");
+      setFile(null);
+      setType("pdf");
+      setFlow("resources");
+      setSelectedDepartment("");
+      fetchResources();
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    }
+    setUploading(false);
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl w-full space-y-6">
       <h1 className="text-2xl font-bold text-purple-700">
         Resource Management
       </h1>
+
+      {/* Upload Resource Form */}
+      <form
+        onSubmit={handleUploadSubmit}
+        className="space-y-6 bg-white rounded-lg shadow p-6 mb-6"
+      >
+        <h2 className="text-lg font-semibold text-purple-900 mb-2">
+          Upload Resource
+        </h2>
+        {uploadError && <div className="text-red-600 mb-2">{uploadError}</div>}
+        {uploadSuccess && (
+          <div className="text-green-600 mb-2">{uploadSuccess}</div>
+        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Flow
+          </label>
+          <select
+            value={flow}
+            onChange={(e) => setFlow(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          >
+            <option value="resources">Resources</option>
+            <option value="orientation">Orientation</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Department
+          </label>
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className={`mt-1 block w-full rounded-md border ${
+              validationErrors.department ? "border-red-500" : "border-gray-300"
+            } px-3 py-2`}
+          >
+            <option value="">Select a department</option>
+            {departments.map((dept: Department) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+          {validationErrors.department && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.department}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Title
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={`mt-1 block w-full rounded-md border ${
+              validationErrors.title ? "border-red-500" : "border-gray-300"
+            } px-3 py-2`}
+          />
+          {validationErrors.title && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.title}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Description (optional)
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Resource Type
+          </label>
+          <select
+            value={type}
+            onChange={(e) =>
+              setType(e.target.value as "pdf" | "video" | "link")
+            }
+            className={`mt-1 block w-full rounded-md border ${
+              validationErrors.type ? "border-red-500" : "border-gray-300"
+            } px-3 py-2`}
+          >
+            <option value="pdf">PDF Document</option>
+            <option value="video">Youtube Link</option>
+            <option value="link">External Link</option>
+          </select>
+          {validationErrors.type && (
+            <p className="mt-1 text-sm text-red-600">{validationErrors.type}</p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            File
+          </label>
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="block w-full text-sm text-gray-500"
+          />
+          {validationErrors.file && (
+            <p className="mt-1 text-sm text-red-600">{validationErrors.file}</p>
+          )}
+        </div>
+        <button
+          type="submit"
+          disabled={uploading}
+          className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : "Upload Resource"}
+        </button>
+      </form>
 
       {/* Batch Upload Section */}
       <div className="mb-4">
@@ -234,7 +451,7 @@ export default function AdminResources() {
                 className="w-full rounded border px-3 py-2"
               >
                 <option value="">Select a department</option>
-                {departments.map((dept: { id: string; name: string }) => (
+                {departments.map((dept: Department) => (
                   <option key={dept.id} value={dept.id}>
                     {dept.name}
                   </option>
@@ -348,7 +565,11 @@ export default function AdminResources() {
 
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
+          onChange={(e) =>
+            setStatusFilter(
+              e.target.value as "all" | "pending" | "approved" | "rejected"
+            )
+          }
           className="rounded-md border border-purple-200 px-4 py-2 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
         >
           <option value="all">All Status</option>
@@ -356,6 +577,21 @@ export default function AdminResources() {
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
+
+        <div className="relative flex-1 max-w-xs">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Flow
+          </label>
+          <select
+            value={flowFilter}
+            onChange={(e) => setFlowFilter(e.target.value)}
+            className="w-full rounded-md border border-purple-200 px-4 py-2 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
+          >
+            <option value="all">All Flows</option>
+            <option value="resources">Resources</option>
+            <option value="orientation">Orientation</option>
+          </select>
+        </div>
 
         {selectedResources.length > 0 && (
           <div className="flex gap-2">
@@ -417,8 +653,6 @@ export default function AdminResources() {
                     {resource.description}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                    <span>By {resource.author.full_name}</span>
-                    <span>•</span>
                     <span>
                       {new Date(resource.created_at).toLocaleDateString()}
                     </span>
@@ -477,11 +711,11 @@ export default function AdminResources() {
                     : "bg-yellow-100 text-yellow-700"
                 }`}
               >
-                {resource.status.charAt(0).toUpperCase() +
-                  resource.status.slice(1)}
+                {(resource.status || "pending").charAt(0).toUpperCase() +
+                  (resource.status || "pending").slice(1)}
               </span>
               <span className="text-xs text-gray-500">
-                {resource.file_type.toUpperCase()}
+                {(resource.file_type || "pdf").toUpperCase()}
               </span>
             </div>
           </div>

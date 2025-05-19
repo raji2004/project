@@ -10,7 +10,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       email,
       password,
     });
-    console.log("error", error);
     if (error) throw error;
 
     // Fetch user data after successful sign in
@@ -18,64 +17,41 @@ export const useAuthStore = create<AuthState>((set) => ({
       data: { user: authUser },
     } = await supabase.auth.getUser();
     if (authUser) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authUser.id)
-        .maybeSingle();
+        .single();
 
-      if (profile) {
-        set({ user: profile });
-      } else {
-        // Handle case where profile doesn't exist
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              id: authUser.id,
-              student_id: authUser.user_metadata.student_id,
-              email: authUser.email,
-            },
-          ])
-          .select()
-          .single();
-
-        if (profileError) throw profileError;
-
-        const { data: newProfile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-
-        set({ user: newProfile });
-      }
+      if (profileError) throw profileError;
+      set({ user: profile });
     }
   },
-  signUp: async (email: string, password: string, studentId: string) => {
-    // First check if user exists
-    const { data: existingUser } = await supabase
-      .from("profiles")
-      .select("student_id")
-      .eq("student_id", studentId)
-      .maybeSingle();
-
-    if (existingUser) {
-      throw new Error("A user with this student ID already exists");
-    }
-
-    const { error, data } = await supabase.auth.signUp({
+  signUp: async (
+    email: string,
+    password: string,
+    studentId: string,
+    fullName?: string,
+    departmentId?: string
+  ) => {
+    console.log("Starting signup process...");
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           student_id: studentId,
+          full_name: fullName || null,
+          department_id: departmentId || null,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
+    console.log("Signup response:", { data, error });
+
     if (error) {
+      console.error("Signup error:", error);
       if (error.message === "User already registered") {
         throw new Error(
           "This email is already registered. Please try logging in instead."
@@ -84,9 +60,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw error;
     }
 
-    // We don't create the profile here anymore - it will be created after email verification
-    // The profile will be created in the auth callback handler
-    return data;
+    if (!data?.user) {
+      console.error("No user data returned from signup");
+      throw new Error("Registration failed. Please try again.");
+    }
+
+    // Check if email confirmation is required
+    if (data.user.identities?.length === 0) {
+      console.log("Email confirmation required");
+      return;
+    }
+
+    console.log("Signup successful, user:", data.user);
   },
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
@@ -110,42 +95,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       } = await supabase.auth.getUser();
 
       if (authUser) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", authUser.id)
-          .maybeSingle();
+          .single();
 
-        if (profile) {
-          set({ user: profile, loading: false });
-        } else {
-          // Handle case where profile doesn't exist
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert([
-              {
-                id: authUser.id,
-                student_id: authUser.user_metadata.student_id,
-                email: authUser.email,
-              },
-            ])
-            .select()
-            .single();
-
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            set({ user: null, loading: false });
-            return;
-          }
-
-          const { data: newProfile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", authUser.id)
-            .single();
-
-          set({ user: newProfile, loading: false });
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          set({ user: null, loading: false });
+          return;
         }
+        set({ user: profile, loading: false });
       } else {
         set({ user: null, loading: false });
       }
