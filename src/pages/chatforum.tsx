@@ -28,6 +28,7 @@ export default function Groups() {
   const [resourceFiles, setResourceFiles] = useState<File[]>([]);
   const [resourceLinks, setResourceLinks] = useState<string[]>([]);
   const [linkInput, setLinkInput] = useState("");
+  const [isRestricted, setIsRestricted] = useState(false);
 
   // Utility for alternating backgrounds
   const commentBg = (idx: number) =>
@@ -35,7 +36,17 @@ export default function Groups() {
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+    if (user?.id) {
+      supabase
+        .from("profiles")
+        .select("is_restricted")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          setIsRestricted(data?.is_restricted || false);
+        });
+    }
+  }, [fetchPosts, user?.id]);
 
   const handleSelectPost = async (postId: string) => {
     await fetchPost(postId);
@@ -95,13 +106,19 @@ export default function Groups() {
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6 animate-fade-in">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Chat Forum</h1>
-          <button
-            onClick={() => setShowNewPost(true)}
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow transition-transform active:scale-95"
-          >
-            <Plus className="h-4 w-4 mr-2 animate-pulse" />
-            New Post
-          </button>
+          {isRestricted ? (
+            <div className="text-red-600 font-medium">
+              You are restricted and cannot create posts or comments.
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewPost(true)}
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow transition-transform active:scale-95"
+            >
+              <Plus className="h-4 w-4 mr-2 animate-pulse" />
+              New Post
+            </button>
+          )}
         </div>
       </div>
 
@@ -111,7 +128,7 @@ export default function Groups() {
         </div>
       )}
 
-      {showNewPost && (
+      {showNewPost && !isRestricted && (
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Create New Post
@@ -189,7 +206,7 @@ export default function Groups() {
                   src={
                     post.author?.avatar_url
                       ? getAvatarUrl(post.author.avatar_url)
-                      : "/default-avatar.png"
+                      : "avatar.png"
                   }
                   alt="avatar"
                   className="h-12 w-12 rounded-full object-cover border-2 border-purple-200 mr-4 group-hover:scale-105 transition-transform"
@@ -479,132 +496,138 @@ export default function Groups() {
                         </React.Fragment>
                       ))}
                     </div>
-                    <form onSubmit={handleCreateComment} className="mt-6">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex space-x-4 items-center">
-                          <img
-                            src={
-                              user?.avatar_url
-                                ? getAvatarUrl(user.avatar_url)
-                                : "/default-avatar.png"
-                            }
-                            alt="avatar"
-                            className="h-8 w-8 rounded-full object-cover border-2 border-purple-200"
-                          />
-                          <input
-                            type="text"
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Write a comment..."
-                            className="flex-1 rounded-md border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 text-sm bg-purple-50"
-                          />
-                          <button
-                            type="submit"
-                            disabled={
-                              !newComment.trim() &&
-                              resourceFiles.length === 0 &&
-                              resourceLinks.length === 0
-                            }
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 shadow transition-transform active:scale-95"
-                          >
-                            <Send className="h-4 w-4 mr-2 animate-pulse" />
-                            Send
-                          </button>
-                        </div>
-                        {/* File input for resources */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <label className="cursor-pointer text-purple-600 hover:underline text-sm">
-                            Attach files
+                    {isRestricted ? (
+                      <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded">
+                        You are restricted and cannot create comments.
+                      </div>
+                    ) : (
+                      <form onSubmit={handleCreateComment} className="mt-6">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex space-x-4 items-center">
+                            <img
+                              src={
+                                user?.avatar_url
+                                  ? getAvatarUrl(user.avatar_url)
+                                  : "/default-avatar.png"
+                              }
+                              alt="avatar"
+                              className="h-8 w-8 rounded-full object-cover border-2 border-purple-200"
+                            />
                             <input
-                              type="file"
-                              multiple
-                              className="hidden"
-                              onChange={(e) => {
-                                if (e.target.files) {
-                                  const files = Array.from(e.target.files);
-                                  setResourceFiles((prev) => {
-                                    const combined = [...prev, ...files];
-                                    return combined.slice(0, 3);
-                                  });
+                              type="text"
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              placeholder="Write a comment..."
+                              className="flex-1 rounded-md border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 text-sm bg-purple-50"
+                            />
+                            <button
+                              type="submit"
+                              disabled={
+                                !newComment.trim() &&
+                                resourceFiles.length === 0 &&
+                                resourceLinks.length === 0
+                              }
+                              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 shadow transition-transform active:scale-95"
+                            >
+                              <Send className="h-4 w-4 mr-2 animate-pulse" />
+                              Send
+                            </button>
+                          </div>
+                          {/* File input for resources */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <label className="cursor-pointer text-purple-600 hover:underline text-sm">
+                              Attach files
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files) {
+                                    const files = Array.from(e.target.files);
+                                    setResourceFiles((prev) => {
+                                      const combined = [...prev, ...files];
+                                      return combined.slice(0, 3);
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                            {/* Link input */}
+                            <input
+                              type="text"
+                              value={linkInput}
+                              onChange={(e) => setLinkInput(e.target.value)}
+                              placeholder="Paste a link and press Add"
+                              className="rounded-md border border-purple-200 px-2 py-1 text-sm w-64 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
+                            />
+                            <button
+                              type="button"
+                              className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium hover:bg-purple-200 transition-colors"
+                              onClick={() => {
+                                if (linkInput.trim()) {
+                                  setResourceLinks([
+                                    ...resourceLinks,
+                                    linkInput.trim(),
+                                  ]);
+                                  setLinkInput("");
                                 }
                               }}
-                            />
-                          </label>
-                          {/* Link input */}
-                          <input
-                            type="text"
-                            value={linkInput}
-                            onChange={(e) => setLinkInput(e.target.value)}
-                            placeholder="Paste a link and press Add"
-                            className="rounded-md border border-purple-200 px-2 py-1 text-sm w-64 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
-                          />
-                          <button
-                            type="button"
-                            className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium hover:bg-purple-200 transition-colors"
-                            onClick={() => {
-                              if (linkInput.trim()) {
-                                setResourceLinks([
-                                  ...resourceLinks,
-                                  linkInput.trim(),
-                                ]);
-                                setLinkInput("");
-                              }
-                            }}
-                          >
-                            Add Link
-                          </button>
-                        </div>
-                        {/* Preview of selected files and links */}
-                        {(resourceFiles.length > 0 ||
-                          resourceLinks.length > 0) && (
-                          <div className="flex flex-wrap gap-4 mt-2">
-                            {resourceFiles.map((file, idx) => (
-                              <div
-                                key={idx}
-                                className="flex flex-col items-center text-xs bg-purple-50 rounded-lg p-2 border-2 border-purple-100 shadow-sm"
-                              >
-                                {file.type.startsWith("image") ? (
-                                  <img
-                                    src={URL.createObjectURL(file)}
-                                    alt={file.name}
-                                    className="h-12 w-12 object-cover rounded border-2 border-purple-200"
-                                  />
-                                ) : file.type.startsWith("video") ? (
-                                  <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
-                                    🎬
-                                  </span>
-                                ) : (
-                                  <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
-                                    📄
-                                  </span>
-                                )}
-                                <span className="truncate w-16 text-purple-800">
-                                  {file.name}
-                                </span>
-                              </div>
-                            ))}
-                            {resourceLinks.map((link, idx) => (
-                              <div
-                                key={idx}
-                                className="flex flex-col items-center text-xs bg-purple-50 rounded-lg p-2 border-2 border-purple-100 shadow-sm"
-                              >
-                                <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
-                                  🔗
-                                </span>
-                                <a
-                                  href={link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="truncate w-16 text-purple-600 underline"
-                                >
-                                  Link {idx + 1}
-                                </a>
-                              </div>
-                            ))}
+                            >
+                              Add Link
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    </form>
+                          {/* Preview of selected files and links */}
+                          {(resourceFiles.length > 0 ||
+                            resourceLinks.length > 0) && (
+                            <div className="flex flex-wrap gap-4 mt-2">
+                              {resourceFiles.map((file, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex flex-col items-center text-xs bg-purple-50 rounded-lg p-2 border-2 border-purple-100 shadow-sm"
+                                >
+                                  {file.type.startsWith("image") ? (
+                                    <img
+                                      src={URL.createObjectURL(file)}
+                                      alt={file.name}
+                                      className="h-12 w-12 object-cover rounded border-2 border-purple-200"
+                                    />
+                                  ) : file.type.startsWith("video") ? (
+                                    <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
+                                      🎬
+                                    </span>
+                                  ) : (
+                                    <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
+                                      📄
+                                    </span>
+                                  )}
+                                  <span className="truncate w-16 text-purple-800">
+                                    {file.name}
+                                  </span>
+                                </div>
+                              ))}
+                              {resourceLinks.map((link, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex flex-col items-center text-xs bg-purple-50 rounded-lg p-2 border-2 border-purple-100 shadow-sm"
+                                >
+                                  <span className="h-12 w-12 flex items-center justify-center bg-purple-100 rounded border-2 border-purple-200">
+                                    🔗
+                                  </span>
+                                  <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate w-16 text-purple-600 underline"
+                                  >
+                                    Link {idx + 1}
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
               )}

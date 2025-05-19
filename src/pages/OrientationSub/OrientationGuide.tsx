@@ -53,7 +53,6 @@ export default function OrientationGuide() {
                   <p>View Student Email</p>
                 </div>
               </div>
-
             </div>
             <div className='container p-4 mb-3 rounded-md bg-violet-400'>
               <p className='text-lg'><b>Did you know?</b></p>

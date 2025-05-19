@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,11 +21,14 @@ import ResourcesLibrary from "./pages/ResourceSub/ResourcesLibrary";
 import ResourcesPQ from "./pages/ResourceSub/ResourcesPQ";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
+import AdminEvents from "./pages/admin/AdminEvents";
 import Homepage from "./pages/Homepage/page";
-import UploadResources from "./pages/admin/UploadResources";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLayout from "./pages/admin/AdminLayout";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminForum from "./pages/admin/AdminForum";
+import AdminResources from "./pages/admin/AdminResources";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import UploadResources from "./pages/admin/UploadResources";
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore();
@@ -47,6 +50,14 @@ function App() {
     initializeAuth();
   }, [initializeAuth]);
 
+  const [events, setEvents] = useState([]);
+
+  /*Added Code*/
+  const handleAddEvent = (newEvent) => {
+    setEvents([events, newEvent]);
+  };
+  /*End of Added. Please link to db*/
+
   return (
     <Router>
       <Routes>
@@ -60,7 +71,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat-forum" element={<ChatForum />} />
-          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/schedule" element={<Schedule events={events} />} /> {/*Added events={events}*/}
+          <Route path="/adminevent" element={<AdminEvents onAddEvent={handleAddEvent} />} /> {/*This is the added file for the admin page*/}
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/orientationguide" element={<OrientationGuide />} />
           <Route path="/orientationvids" element={<OrientationVids />} />
@@ -72,21 +84,16 @@ function App() {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminDashboard />
+              <AdminLayout />
             </AdminRoute>
           }
         >
-          <Route
-            index
-            element={
-              <div className="text-2xl font-bold text-purple-700">
-                Welcome to the Admin Dashboard
-              </div>
-            }
-          />
+          <Route index element={<AdminAnalytics />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="upload-resources" element={<UploadResources />} />
           <Route path="forum" element={<AdminForum />} />
+          <Route path="resources" element={<AdminResources />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="upload-resources" element={<UploadResources />} />
         </Route>
       </Routes>
     </Router>

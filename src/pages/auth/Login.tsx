@@ -64,15 +64,6 @@ export default function Login() {
 
   return (
     <div className="relative">
-      {/* Admin icon top-right */}
-      <button
-        type="button"
-        onClick={() => navigate("/admin/login")}
-        className="absolute right-0 -top-12 md:top-0 md:right-2 p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 shadow transition-colors"
-        title="Admin Login"
-      >
-        <Shield className="h-6 w-6" />
-      </button>
       <form onSubmit={handleSubmit} className="space-y-6">
         {state?.message && (
           <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">

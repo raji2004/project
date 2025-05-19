@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { CheckCircle } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 
 function getPasswordStrength(password: string) {
   let score = 0;
@@ -43,12 +44,16 @@ interface ValidationErrors {
   email?: string;
   password?: string;
   studentId?: string;
+  fullName?: string;
+  confirmPassword?: string;
 }
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -82,13 +87,25 @@ export default function Register() {
       errors.password = "Password must contain at least one number";
     }
 
-    // Student ID validation
+    // Confirm password validation
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    // Student ID validation (exactly 9 digits)
     if (!studentId) {
       errors.studentId = "Student ID is required";
-    } else if (!/^\d+$/.test(studentId)) {
-      errors.studentId = "Student ID must contain only numbers";
-    } else if (studentId.length < 6) {
-      errors.studentId = "Student ID must be at least 6 digits long";
+    } else if (!/^\d{9}$/.test(studentId)) {
+      errors.studentId = "Student ID must be exactly 9 digits";
+    }
+
+    // Full name validation
+    if (!fullName) {
+      errors.fullName = "Full name is required";
+    } else if (fullName.trim().length < 3) {
+      errors.fullName = "Full name must be at least 3 characters";
     }
 
     setValidationErrors(errors);
@@ -100,20 +117,24 @@ export default function Register() {
     setError("");
     setSuccess(false);
     setValidationErrors({});
-
     if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly.");
       return;
     }
-
     try {
-      await signUp(email, password, studentId);
+      await signUp(email, password, studentId, fullName);
       setSuccess(true);
+      toast.success(
+        "Registration successful! Please check your email to verify your account."
+      );
       // Clear form after successful registration
       setEmail("");
       setPassword("");
+      setConfirmPassword("");
       setStudentId("");
+      setFullName("");
     } catch (err) {
-      setError(
+      toast.error(
         err instanceof Error
           ? err.message
           : "Registration failed. Please try again."
@@ -123,6 +144,7 @@ export default function Register() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <Toaster position="top-center" />
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
           {error}
@@ -164,6 +186,31 @@ export default function Register() {
           </div>
           <div>
             <label
+              htmlFor="fullName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Full Name
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className={`mt-1 block w-full rounded-md border ${
+                validationErrors.fullName ? "border-red-500" : "border-gray-300"
+              } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+              minLength={3}
+              maxLength={50}
+            />
+            {validationErrors.fullName && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.fullName}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
               htmlFor="studentId"
               className="block text-sm font-medium text-gray-700"
             >
@@ -174,12 +221,18 @@ export default function Register() {
               type="text"
               required
               value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
+              onChange={(e) => {
+                // Only allow digits, max 9
+                const val = e.target.value.replace(/\D/g, "").slice(0, 9);
+                setStudentId(val);
+              }}
               className={`mt-1 block w-full rounded-md border ${
                 validationErrors.studentId
                   ? "border-red-500"
                   : "border-gray-300"
               } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+              maxLength={9}
+              minLength={9}
             />
             {validationErrors.studentId && (
               <p className="mt-1 text-sm text-red-600">
@@ -259,6 +312,44 @@ export default function Register() {
             {validationErrors.password && (
               <p className="mt-1 text-sm text-red-600">
                 {validationErrors.password}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`mt-1 block w-full rounded-md border ${
+                validationErrors.confirmPassword
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+            />
+            {confirmPassword && (
+              <p
+                className={`mt-1 text-sm ${
+                  password === confirmPassword
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
+              >
+                {password === confirmPassword
+                  ? "Passwords match"
+                  : "Passwords do not match"}
+              </p>
+            )}
+            {validationErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.confirmPassword}
               </p>
             )}
           </div>
