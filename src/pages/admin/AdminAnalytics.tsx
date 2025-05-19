@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+// If you see a 'Cannot find module "recharts"' error, run: npm install recharts
+import React, { useEffect, useState, useContext } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Users,
   MessageSquare,
   FileText,
-  Download,
-  TrendingUp,
-  Calendar,
+  // Download, // removed unused
+  // TrendingUp, // removed unused
+  // Calendar, // removed unused
 } from "lucide-react";
 import {
   LineChart,
@@ -19,6 +20,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { AdminLoadingContext } from "./AdminLayout";
 
 interface AnalyticsData {
   totalUsers: number;
@@ -49,9 +51,11 @@ export default function AdminAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setGlobalLoading } = useContext(AdminLoadingContext);
 
   useEffect(() => {
-    fetchAnalytics();
+    setGlobalLoading(true);
+    fetchAnalytics().finally(() => setGlobalLoading(false));
   }, []);
 
   async function fetchAnalytics() {
@@ -131,15 +135,20 @@ export default function AdminAnalytics() {
     setLoading(false);
   }
 
-  function processDailyActivity(activity: any[]) {
+  function processDailyActivity(
+    activity: { created_at: string }[]
+  ): { date: string; posts: number; comments: number; downloads: number }[] {
     // Group activity by date and count posts/comments/downloads
-    const activityMap = new Map();
+    const activityMap = new Map<
+      string,
+      { posts: number; comments: number; downloads: number }
+    >();
     activity.forEach((item) => {
       const date = new Date(item.created_at).toISOString().split("T")[0];
       if (!activityMap.has(date)) {
         activityMap.set(date, { posts: 0, comments: 0, downloads: 0 });
       }
-      activityMap.get(date).posts++;
+      activityMap.get(date)!.posts++;
     });
 
     return Array.from(activityMap.entries()).map(([date, counts]) => ({
@@ -148,15 +157,20 @@ export default function AdminAnalytics() {
     }));
   }
 
-  function processUserActivity(activity: any[]) {
+  function processUserActivity(
+    activity: { created_at: string; last_active: string }[]
+  ): { date: string; newUsers: number; activeUsers: number }[] {
     // Group user activity by date
-    const activityMap = new Map();
+    const activityMap = new Map<
+      string,
+      { newUsers: number; activeUsers: number }
+    >();
     activity.forEach((item) => {
       const date = new Date(item.created_at).toISOString().split("T")[0];
       if (!activityMap.has(date)) {
         activityMap.set(date, { newUsers: 0, activeUsers: 0 });
       }
-      activityMap.get(date).newUsers++;
+      activityMap.get(date)!.newUsers++;
     });
 
     return Array.from(activityMap.entries()).map(([date, counts]) => ({
@@ -166,11 +180,7 @@ export default function AdminAnalytics() {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
-      </div>
-    );
+    return null;
   }
 
   if (error) {
@@ -182,11 +192,7 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-purple-700">
-        Analytics Dashboard
-      </h1>
-
+    <div className="max-w-5xl w-full">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
@@ -321,6 +327,59 @@ export default function AdminAnalytics() {
               <Bar dataKey="downloads" fill="#9333ea" />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* User Analytics */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          User Analytics
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-purple-900">Total Users</h3>
+            <p className="text-3xl font-bold text-purple-600">
+              {data.totalUsers}
+            </p>
+          </div>
+          <div className="bg-red-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-red-900">
+              Restricted Users
+            </h3>
+            <p className="text-3xl font-bold text-red-600">
+              {/* Assuming you have a way to fetch restricted users */}0
+            </p>
+          </div>
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-yellow-900">
+              Banned Users
+            </h3>
+            <p className="text-3xl font-bold text-yellow-600">
+              {/* Assuming you have a way to fetch banned users */}0
+            </p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-blue-900">
+              Total Restrictions
+            </h3>
+            <p className="text-3xl font-bold text-blue-600">
+              {/* Assuming you have a way to fetch total restrictions */}0
+            </p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-green-900">Total Bans</h3>
+            <p className="text-3xl font-bold text-green-600">
+              {/* Assuming you have a way to fetch total bans */}0
+            </p>
+          </div>
+          <div className="bg-indigo-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-indigo-900">
+              Total Warnings
+            </h3>
+            <p className="text-3xl font-bold text-indigo-600">
+              {/* Assuming you have a way to fetch total warnings */}0
+            </p>
+          </div>
         </div>
       </div>
     </div>

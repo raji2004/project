@@ -8,10 +8,10 @@ import {
   BookOpen,
   Calendar,
   Users,
-  Bell,
   LogOut,
   Upload,
 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
   const { user, signOut } = useAuthStore();
@@ -76,7 +76,7 @@ export default function Navbar() {
               </Link>
               {isAdmin && (
                 <Link
-                  to="/admin/upload-resources"
+                  to="/admin"
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
                 >
                   <Upload className="h-4 w-4 mr-1" />
@@ -86,9 +86,7 @@ export default function Navbar() {
             </div>
           </div>
           <div className="flex items-center">
-            <button className="p-2 rounded-full text-gray-500 hover:text-gray-900">
-              <Bell className="h-6 w-6" />
-            </button>
+            <NotificationBell />
             <div className="ml-3 relative flex items-center space-x-4">
               <Link
                 to="/profile"

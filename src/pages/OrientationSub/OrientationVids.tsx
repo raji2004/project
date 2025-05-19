@@ -31,7 +31,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/FLpn1u333U8?si=cOWYoR-KDu4w4Lpk' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/y-S9-U8n9eY?si=9rmBxs97hRsUbloE" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
@@ -42,7 +41,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/y-S9-U8n9eY?si=DAuWAhehr3yaWlrx' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/aZVKGiBWDSI?si=SwJ0FFknHTQvQjIl" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
@@ -53,7 +51,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/aZVKGiBWDSI?si=SwJ0FFknHTQvQjIl' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/MmJc-8M4HG4?si=KBPihXWokD3pjUWg" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
@@ -64,7 +61,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/MmJc-8M4HG4?si=KBPihXWokD3pjUWg' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/FcGcgPuP844?si=-YhwLg3GLyCnVNi2" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
@@ -75,7 +71,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/FcGcgPuP844?si=r_bwuDgsAed5fkrF' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/WDTaFYQugf0?si=t6WW8nvFIeAPKaT6" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
@@ -86,7 +81,6 @@ export default function OrientationVids() {
                 <a href='https://youtu.be/WDTaFYQugf0?si=t6WW8nvFIeAPKaT6' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
               </div>
             </div>
-
             <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
               <iframe className='p-4' src="https://www.youtube.com/embed/mWo1apygv6o?si=EHpQnTqbdCrLBuP3" 
               title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
