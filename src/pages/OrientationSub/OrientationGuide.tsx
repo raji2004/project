@@ -22,19 +22,19 @@ export default function OrientationGuide() {
           <p className='text-3xl font-serif text-black py-3'>Orientation Checklist</p>
           
           <div className='mb-5'>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
+            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
               <p className='text-xl col-start-1'><b>Step 1:</b> About the Campus</p>
               <ArrowRight className='col-start-3'/>
             </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
+            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
               <p className='text-xl col-start-1'><b>Step 2:</b> How to Use Student Portals</p>
               <ArrowRight className='col-start-3'/>
             </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
+            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
               <p className='text-xl col-start-1'><b>Step 3:</b> Key Departments</p>
               <ArrowRight className='col-start-3'/>
             </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
+            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
               <p className='text-xl col-start-1 col-start-1'><b>Step 4:</b> Clubs and Activities</p>
               <ArrowRight className='col-start-3'/>
             </div>
@@ -44,18 +44,17 @@ export default function OrientationGuide() {
             <div className='grid grid-cols-1'>
               
               <a href="https://maps.app.goo.gl/UWHkQKM98SDzYCA8A" target='blank'>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2 shadow-md'>
+                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2'>
                   <p>Open Campus Map</p>
                 </div>
               </a>
               <div>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2 shadow-md'>
+                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2'>
                   <p>View Student Email</p>
                 </div>
               </div>
-
             </div>
-            <div className='container p-4 mb-3 rounded-md bg-violet-400 shadow-md'>
+            <div className='container p-4 mb-3 rounded-md bg-violet-400'>
               <p className='text-lg'><b>Did you know?</b></p>
               <p className='overflow-auto'>Did you know that Nile University of Nigeria is affiliated with Honoris which makes it
                 member of a large, pan-African private higher education network. This membership provides
@@ -65,11 +64,11 @@ export default function OrientationGuide() {
             </div>
           </div>
 
-          <div className='mb-5 bg-violet-200 p-4 rounded-md shadow-md'>
+          <div className='mb-5 bg-violet-200 p-4 rounded-md'>
             <p id='FAQs' className='text-4xl mb-2'>Frequently Asked Questions</p>
             <p id='FAQs' className='text-md mb-5'>This is appears only in Orientation Checklist...</p>
 
-            <table className="border-separate border border-violet-800 w-full shadow-md">
+            <table className="border-separate border border-violet-800 w-full">
               <thead>
                 <tr>
                   <th className='bg-violet-400 text-xl'>Question...?</th>
