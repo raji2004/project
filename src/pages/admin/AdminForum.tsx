@@ -1,197 +1,153 @@
-import React, { useEffect, useState, useContext } from "react";
-import { supabase } from "../../lib/supabase";
-import {
-  Trash2,
-  MessageSquare,
-  Loader2,
-  Flag,
-  CheckCircle,
-  Search,
-  User as UserIcon,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { MessageSquare, Loader2, Flag, Search } from "lucide-react";
 import { getAvatarUrl } from "../../utils/avatar";
-import { AdminLoadingContext } from "./AdminLayout";
+import { supabase } from "../../lib/supabase";
+import toast from "react-hot-toast";
 
-interface Post {
+interface ForumResource {
+  name?: string;
+  url?: string;
+  type?: "file" | "image" | "video" | "link";
+}
+
+interface ForumPost {
   id: string;
+  author_id: string;
   title: string;
   content: string;
-  author_id: string;
   created_at: string;
-  author: { full_name: string; avatar_url?: string } | null;
+  status: "pending" | "approved" | "rejected";
+  author?: { full_name: string; avatar_url?: string } | null;
   flagged?: boolean;
-  resources?: any;
+  resources?: ForumResource[];
 }
-interface Comment {
+
+interface ForumComment {
   id: string;
   post_id: string;
-  content: string;
   author_id: string;
+  content: string;
   created_at: string;
-  author: { full_name: string; avatar_url?: string } | null;
-  flagged?: boolean;
-  resources?: any;
+  status: "pending" | "approved" | "rejected";
+  author?: { full_name: string; avatar_url?: string } | null;
+  resources?: ForumResource[];
 }
 
 export default function AdminForum() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [comments, setComments] = useState<ForumComment[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
   const [search, setSearch] = useState("");
-  const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
-  const [selectedComments, setSelectedComments] = useState<string[]>([]);
-  const [showFlagged, setShowFlagged] = useState(false);
-  const { setGlobalLoading } = useContext(AdminLoadingContext);
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  async function fetchPosts() {
-    setGlobalLoading(true);
+  const fetchPosts = async () => {
+    setLoading(true);
     setError("");
-    console.log("[DEBUG] Fetching forum posts...");
-    const { data, error } = await supabase
-      .from("forum_posts")
-      .select(
-        "id, title, content, author_id, created_at, flagged, resources, author:profiles!forum_posts_author_id_fkey(full_name, avatar_url)"
-      )
-      .order("created_at", { ascending: false });
-    console.log("[DEBUG] Supabase forum_posts data:", data);
-    console.log("[DEBUG] Supabase forum_posts error:", error);
-    if (error) setError("Failed to fetch posts");
-    else {
-      // Normalize author field
-      const normalized = (data || []).map((post) => ({
-        ...post,
-        author: Array.isArray(post.author)
-          ? post.author[0] || null
-          : post.author || null,
-      }));
-      setPosts(normalized);
+    try {
+      const { data, error } = await supabase
+        .from("forum_posts")
+        .select("*, author:profiles(full_name, avatar_url)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch posts";
+      setError(message);
+      toast.error(message);
     }
     setLoading(false);
-    setGlobalLoading(false);
-  }
+  };
 
-  async function fetchComments(postId: string) {
-    setGlobalLoading(true);
-    setComments([]);
-    console.log(`[DEBUG] Fetching comments for postId: ${postId}`);
-    const { data, error } = await supabase
-      .from("forum_comments")
-      .select(
-        "id, post_id, content, author_id, created_at, flagged, resources, author:profiles!inner(full_name, avatar_url)"
-      )
-      .eq("post_id", postId)
-      .order("created_at");
-    console.log("[DEBUG] Supabase forum_comments data:", data);
-    console.log("[DEBUG] Supabase forum_comments error:", error);
-    // Normalize author field
-    const normalized = (data || []).map((comment) => ({
-      ...comment,
-      author: Array.isArray(comment.author)
-        ? comment.author[0] || null
-        : comment.author || null,
-    }));
-    setComments(normalized);
-    setGlobalLoading(false);
-  }
+  const fetchComments = async (postId: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, error } = await supabase
+        .from("forum_comments")
+        .select("*, author:profiles(full_name, avatar_url)")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: false });
 
-  async function deletePost(postId: string) {
-    setActionLoading(postId + "-post");
-    await supabase.from("forum_posts").delete().eq("id", postId);
-    await fetchPosts();
-    setSelectedPost(null);
-    setActionLoading(null);
-  }
+      if (error) throw error;
+      setComments(data || []);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch comments";
+      setError(message);
+      toast.error(message);
+    }
+    setLoading(false);
+  };
 
-  async function deleteComment(commentId: string, postId: string) {
-    setActionLoading(commentId + "-comment");
-    await supabase.from("forum_comments").delete().eq("id", commentId);
-    await fetchComments(postId);
-    setActionLoading(null);
-  }
+  const moderatePost = async (
+    postId: string,
+    action: "approve" | "reject" | "delete"
+  ) => {
+    setLoading(true);
+    setError("");
+    try {
+      if (action === "delete") {
+        await supabase.from("forum_posts").delete().eq("id", postId);
+      } else {
+        await supabase
+          .from("forum_posts")
+          .update({ status: action })
+          .eq("id", postId);
+      }
+      await fetchPosts();
+      toast.success(`Post ${action}ed successfully`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to moderate post";
+      setError(message);
+      toast.error(message);
+    }
+    setLoading(false);
+  };
 
-  async function flagPost(postId: string, flagged: boolean) {
-    setActionLoading(postId + "-flag");
-    await supabase
-      .from("forum_posts")
-      .update({ flagged: !flagged })
-      .eq("id", postId);
-    await fetchPosts();
-    setActionLoading(null);
-  }
-
-  async function flagComment(
+  const moderateComment = async (
     commentId: string,
-    flagged: boolean,
-    postId: string
-  ) {
-    setActionLoading(commentId + "-flag");
-    await supabase
-      .from("forum_comments")
-      .update({ flagged: !flagged })
-      .eq("id", commentId);
-    await fetchComments(postId);
-    setActionLoading(null);
-  }
-
-  // Bulk actions
-  async function bulkDeletePosts() {
-    setActionLoading("bulk-delete-posts");
-    await supabase.from("forum_posts").delete().in("id", selectedPosts);
-    setSelectedPosts([]);
-    await fetchPosts();
-    setActionLoading(null);
-  }
-  async function bulkFlagPosts(flag: boolean) {
-    setActionLoading("bulk-flag-posts");
-    await supabase
-      .from("forum_posts")
-      .update({ flagged: flag })
-      .in("id", selectedPosts);
-    setSelectedPosts([]);
-    await fetchPosts();
-    setActionLoading(null);
-  }
-  async function bulkDeleteComments() {
-    setActionLoading("bulk-delete-comments");
-    await supabase.from("forum_comments").delete().in("id", selectedComments);
-    setSelectedComments([]);
-    if (selectedPost) await fetchComments(selectedPost.id);
-    setActionLoading(null);
-  }
-  async function bulkFlagComments(flag: boolean) {
-    setActionLoading("bulk-flag-comments");
-    await supabase
-      .from("forum_comments")
-      .update({ flagged: flag })
-      .in("id", selectedComments);
-    setSelectedComments([]);
-    if (selectedPost) await fetchComments(selectedPost.id);
-    setActionLoading(null);
-  }
-
-  // Filtered posts
-  const filteredPosts = posts.filter(
-    (p) =>
-      (!showFlagged || p.flagged) &&
-      (p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.content.toLowerCase().includes(search.toLowerCase()) ||
-        (p.author?.full_name || "")
-          .toLowerCase()
-          .includes(search.toLowerCase()))
-  );
+    action: "approve" | "reject" | "delete"
+  ) => {
+    setLoading(true);
+    setError("");
+    try {
+      if (action === "delete") {
+        await supabase.from("forum_comments").delete().eq("id", commentId);
+      } else {
+        await supabase
+          .from("forum_comments")
+          .update({ status: action })
+          .eq("id", commentId);
+      }
+      if (selectedPost) {
+        await fetchComments(selectedPost.id);
+      }
+      toast.success(`Comment ${action}ed successfully`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to moderate comment";
+      setError(message);
+      toast.error(message);
+    }
+    setLoading(false);
+  };
 
   // Resource card rendering utility
-  function renderResourceCard(res: any, idx: number) {
+  function renderResourceCard(
+    res: { name?: string; url?: string; type?: string },
+    idx: number
+  ) {
     if (!res) return null;
     let icon = "📄";
-    let label = res.name || res.url || "Resource";
+    const label = res.name || res.url || "Resource";
     if (res.type === "image") icon = "🖼️";
     else if (res.type === "video") icon = "🎬";
     else if (res.type === "link") icon = "🔗";
@@ -241,97 +197,57 @@ export default function AdminForum() {
   }
 
   if (loading) {
-    return null; // spinner is now global
+    return (
+      <div className="flex justify-center items-center h-32">
+        <Loader2 className="animate-spin h-8 w-8 text-purple-400" />
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-5xl w-full">
-      <h1 className="text-lg font-bold text-purple-700 mb-6">
-        Forum Moderation
-      </h1>
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <div className="relative w-full max-w-xs">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search posts..."
-            className="w-full rounded-md border border-purple-200 px-4 py-2 pl-10 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
-          />
-          <Search className="absolute left-2 top-2.5 text-purple-400 h-5 w-5" />
+    <div className="p-0 bg-gradient-to-br from-purple-50 to-white min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-extrabold mb-8 text-purple-700 flex items-center gap-2">
+          <MessageSquare className="h-7 w-7 text-purple-500" /> Forum Moderation
+        </h1>
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search posts..."
+              className="w-full rounded-md border border-purple-200 px-4 py-2 pl-10 bg-purple-50 focus:ring-2 focus:ring-purple-400 focus:border-purple-400"
+            />
+            <Search className="absolute left-2 top-2.5 text-purple-400 h-5 w-5" />
+          </div>
         </div>
-        <button
-          className={`px-3 py-1 rounded text-xs font-medium ${
-            showFlagged
-              ? "bg-purple-600 text-white"
-              : "bg-purple-100 text-purple-700"
-          } hover:bg-purple-200 transition-colors`}
-          onClick={() => setShowFlagged((v) => !v)}
-        >
-          {showFlagged ? "Show All" : "Show Flagged Only"}
-        </button>
-        {selectedPosts.length > 0 && (
-          <>
-            <button
-              onClick={bulkDeletePosts}
-              disabled={actionLoading === "bulk-delete-posts"}
-              className="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium transition-colors"
-            >
-              Delete Selected
-            </button>
-            <button
-              onClick={() => bulkFlagPosts(true)}
-              disabled={actionLoading === "bulk-flag-posts"}
-              className="px-3 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs font-medium transition-colors"
-            >
-              Flag Selected
-            </button>
-            <button
-              onClick={() => bulkFlagPosts(false)}
-              disabled={actionLoading === "bulk-flag-posts"}
-              className="px-3 py-1 rounded bg-purple-50 text-purple-500 hover:bg-purple-100 text-xs font-medium transition-colors"
-            >
-              Unflag Selected
-            </button>
-          </>
-        )}
-      </div>
-      {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <Loader2 className="animate-spin h-8 w-8 text-purple-400" />
-        </div>
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-lg font-semibold text-purple-600 mb-4 flex items-center gap-2">
-              <MessageSquare /> Posts
-            </h2>
-            <div className="space-y-3">
-              {filteredPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className={`bg-white rounded-lg shadow p-4 border border-purple-100 cursor-pointer transition-colors ${
-                    selectedPost?.id === post.id
-                      ? "ring-2 ring-purple-400"
-                      : "hover:bg-purple-50"
-                  }`}
-                  onClick={() => {
-                    setSelectedPost(post);
-                    fetchComments(post.id);
-                  }}
-                >
-                  <div className="flex justify-between items-center">
+
+        {error ? (
+          <div className="text-red-600">{error}</div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-lg font-semibold text-purple-600 mb-4 flex items-center gap-2">
+                <MessageSquare /> Posts
+              </h2>
+              <div className="space-y-3">
+                {posts.map((post) => (
+                  <div
+                    key={post.id}
+                    className={`bg-white rounded-lg shadow p-4 border border-purple-100 cursor-pointer transition-colors ${
+                      selectedPost?.id === post.id
+                        ? "ring-2 ring-purple-400"
+                        : "hover:bg-purple-50"
+                    }`}
+                    onClick={() => {
+                      setSelectedPost(post);
+                      fetchComments(post.id);
+                    }}
+                  >
                     <div className="flex items-center gap-3">
                       <div
                         className="cursor-pointer flex items-center gap-2"
-                        onClick={() => {
-                          const event = new CustomEvent("openUserAnalytics", {
-                            detail: { userId: post.author_id },
-                          });
-                          window.dispatchEvent(event);
-                        }}
                         title="View user analytics"
                       >
                         {post.author?.avatar_url ? (
@@ -360,179 +276,168 @@ export default function AdminForum() {
                         <Flag className="h-4 w-4 text-red-500 ml-1" />
                       ) : null}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          flagPost(post.id, !!post.flagged);
-                        }}
-                        disabled={actionLoading === post.id + "-flag"}
-                        className={`p-1 rounded ${
-                          post.flagged
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-purple-50 text-purple-500"
-                        } hover:bg-purple-200 transition-colors`}
-                        title={post.flagged ? "Unflag" : "Flag"}
-                      >
-                        {post.flagged ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <Flag className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deletePost(post.id);
-                        }}
-                        disabled={actionLoading === post.id + "-post"}
-                        className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-gray-700 text-sm line-clamp-2">
+                        {post.content}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moderatePost(post.id, "approve");
+                          }}
+                          className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moderatePost(post.id, "reject");
+                          }}
+                          className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moderatePost(post.id, "delete");
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <p className="mt-2 text-gray-700 text-sm line-clamp-2">
-                    {post.content}
-                  </p>
-                  {(() => {
-                    let resources = post.resources;
-                    if (typeof resources === "string") {
-                      try {
-                        resources = JSON.parse(resources);
-                      } catch {
-                        resources = [];
+                    {(() => {
+                      let resources = post.resources;
+                      if (typeof resources === "string") {
+                        try {
+                          resources = JSON.parse(resources);
+                        } catch {
+                          resources = [];
+                        }
                       }
-                    }
-                    if (Array.isArray(resources) && resources.length > 0) {
-                      return (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {resources.map(renderResourceCard)}
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-              ))}
+                      if (Array.isArray(resources) && resources.length > 0) {
+                        return (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {resources.map(renderResourceCard)}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div>
-            {selectedPost ? (
-              <div className="bg-white rounded-lg shadow p-4 border border-purple-100">
-                <h3 className="font-bold text-purple-700 mb-2">
-                  Comments for: {selectedPost.title}
-                </h3>
-                <div className="flex gap-2 mb-2">
-                  {selectedComments.length > 0 && (
-                    <>
-                      <button
-                        onClick={bulkDeleteComments}
-                        disabled={actionLoading === "bulk-delete-comments"}
-                        className="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-medium transition-colors"
-                      >
-                        Delete Selected
-                      </button>
-                      <button
-                        onClick={() => bulkFlagComments(true)}
-                        disabled={actionLoading === "bulk-flag-comments"}
-                        className="px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-medium transition-colors"
-                      >
-                        Flag Selected
-                      </button>
-                      <button
-                        onClick={() => bulkFlagComments(false)}
-                        disabled={actionLoading === "bulk-flag-comments"}
-                        className="px-2 py-1 bg-purple-50 text-purple-500 rounded hover:bg-purple-100 text-xs font-medium transition-colors"
-                      >
-                        Unflag Selected
-                      </button>
-                    </>
-                  )}
-                </div>
-                {comments.length === 0 ? (
-                  <div className="text-gray-400">No comments yet.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="flex justify-between items-start bg-purple-50 rounded p-3"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="cursor-pointer flex items-center gap-2"
-                            onClick={() => {
-                              const event = new CustomEvent(
-                                "openUserAnalytics",
-                                { detail: { userId: comment.author_id } }
-                              );
-                              window.dispatchEvent(event);
-                            }}
-                            title="View user analytics"
-                          >
+
+            <div>
+              {selectedPost ? (
+                <div className="bg-white rounded-lg shadow p-4 border border-purple-100">
+                  <h3 className="font-bold text-purple-700 mb-2">
+                    Comments for: {selectedPost.title}
+                  </h3>
+                  {comments.length === 0 ? (
+                    <div className="text-gray-400">No comments yet.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {comments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="flex justify-between items-start bg-purple-50 rounded p-3"
+                        >
+                          <div className="flex items-center gap-3">
                             {comment.author?.avatar_url ? (
                               <img
                                 src={getAvatarUrl(comment.author.avatar_url)}
                                 alt="avatar"
-                                className="h-7 w-7 rounded-full object-cover border-2 border-purple-200"
+                                className="h-8 w-8 rounded-full object-cover border-2 border-purple-200"
                                 onError={(e) => {
                                   e.currentTarget.onerror = null;
                                   e.currentTarget.src = "";
                                 }}
                               />
                             ) : (
-                              <div className="h-7 w-7 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200">
-                                <UserIcon className="h-4 w-4 text-purple-600" />
+                              <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200">
+                                <MessageSquare className="h-4 w-4 text-purple-600" />
                               </div>
                             )}
-                            <span className="font-medium text-purple-800">
-                              {comment.author?.full_name || "Unknown"}
-                            </span>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <span className="ml-2 text-xs text-gray-500">
+                                  {new Date(
+                                    comment.created_at
+                                  ).toLocaleDateString()}
+                                </span>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() =>
+                                      moderateComment(comment.id, "approve")
+                                    }
+                                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      moderateComment(comment.id, "reject")
+                                    }
+                                    className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                                  >
+                                    Reject
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      moderateComment(comment.id, "delete")
+                                    }
+                                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="mt-1 text-gray-700 text-sm">
+                                {comment.content}
+                              </p>
+                              {(() => {
+                                let resources = comment.resources;
+                                if (typeof resources === "string") {
+                                  try {
+                                    resources = JSON.parse(resources);
+                                  } catch {
+                                    resources = [];
+                                  }
+                                }
+                                if (
+                                  Array.isArray(resources) &&
+                                  resources.length > 0
+                                ) {
+                                  return (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {resources.map(renderResourceCard)}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1">
-                          <span className="ml-2 text-xs text-gray-500">
-                            {new Date(comment.created_at).toLocaleDateString()}
-                          </span>
-                          <p className="mt-1 text-gray-700 text-sm">
-                            {comment.content}
-                          </p>
-                          {(() => {
-                            let resources = comment.resources;
-                            if (typeof resources === "string") {
-                              try {
-                                resources = JSON.parse(resources);
-                              } catch {
-                                resources = [];
-                              }
-                            }
-                            if (
-                              Array.isArray(resources) &&
-                              resources.length > 0
-                            ) {
-                              return (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {resources.map(renderResourceCard)}
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-gray-400">
-                Select a post to view comments.
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-gray-400">
+                  Select a post to view comments.
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

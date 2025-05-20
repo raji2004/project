@@ -8,6 +8,7 @@ import {
   // Download, // removed unused
   // TrendingUp, // removed unused
   // Calendar, // removed unused
+  BarChart3,
 } from "lucide-react";
 import {
   LineChart,
@@ -192,193 +193,200 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="max-w-5xl w-full">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Users className="h-6 w-6 text-purple-700" />
+    <div className="p-4 bg-gradient-to-br from-purple-50 to-white min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-extrabold mb-8 text-purple-700 flex items-center gap-2">
+          <BarChart3 className="h-7 w-7 text-purple-500" /> Analytics
+        </h1>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <Users className="h-6 w-6 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Users</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {data.totalUsers}
+                </p>
+                <p className="text-sm text-purple-600">
+                  {data.activeUsers} active users
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-purple-900">
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <MessageSquare className="h-6 w-6 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Forum Activity</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {data.totalPosts + data.totalComments}
+                </p>
+                <p className="text-sm text-purple-600">
+                  {data.totalPosts} posts, {data.totalComments} comments
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <FileText className="h-6 w-6 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Resources</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {data.totalResources}
+                </p>
+                <p className="text-sm text-purple-600">
+                  {data.totalDownloads} total downloads
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Activity Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+            <h2 className="text-lg font-semibold text-purple-900 mb-4">
+              Daily Activity
+            </h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.dailyActivity}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="posts"
+                    stroke="#9333ea"
+                    name="Posts"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="comments"
+                    stroke="#a855f7"
+                    name="Comments"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="downloads"
+                    stroke="#c084fc"
+                    name="Downloads"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+            <h2 className="text-lg font-semibold text-purple-900 mb-4">
+              User Growth
+            </h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.userActivity}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="newUsers"
+                    stroke="#9333ea"
+                    name="New Users"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="activeUsers"
+                    stroke="#a855f7"
+                    name="Active Users"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Resources */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
+          <h2 className="text-lg font-semibold text-purple-900 mb-4">
+            Top Resources
+          </h2>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.topResources}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="title" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="downloads" fill="#9333ea" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* User Analytics */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            User Analytics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-purple-900">
+                Total Users
+              </h3>
+              <p className="text-3xl font-bold text-purple-600">
                 {data.totalUsers}
               </p>
-              <p className="text-sm text-purple-600">
-                {data.activeUsers} active users
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-red-900">
+                Restricted Users
+              </h3>
+              <p className="text-3xl font-bold text-red-600">
+                {/* Assuming you have a way to fetch restricted users */}0
               </p>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <MessageSquare className="h-6 w-6 text-purple-700" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Forum Activity</p>
-              <p className="text-2xl font-bold text-purple-900">
-                {data.totalPosts + data.totalComments}
-              </p>
-              <p className="text-sm text-purple-600">
-                {data.totalPosts} posts, {data.totalComments} comments
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-yellow-900">
+                Banned Users
+              </h3>
+              <p className="text-3xl font-bold text-yellow-600">
+                {/* Assuming you have a way to fetch banned users */}0
               </p>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <FileText className="h-6 w-6 text-purple-700" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Resources</p>
-              <p className="text-2xl font-bold text-purple-900">
-                {data.totalResources}
-              </p>
-              <p className="text-sm text-purple-600">
-                {data.totalDownloads} total downloads
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-blue-900">
+                Total Restrictions
+              </h3>
+              <p className="text-3xl font-bold text-blue-600">
+                {/* Assuming you have a way to fetch total restrictions */}0
               </p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Activity Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-          <h2 className="text-lg font-semibold text-purple-900 mb-4">
-            Daily Activity
-          </h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.dailyActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="posts"
-                  stroke="#9333ea"
-                  name="Posts"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="comments"
-                  stroke="#a855f7"
-                  name="Comments"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="downloads"
-                  stroke="#c084fc"
-                  name="Downloads"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-          <h2 className="text-lg font-semibold text-purple-900 mb-4">
-            User Growth
-          </h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.userActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="newUsers"
-                  stroke="#9333ea"
-                  name="New Users"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="activeUsers"
-                  stroke="#a855f7"
-                  name="Active Users"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Resources */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-purple-100">
-        <h2 className="text-lg font-semibold text-purple-900 mb-4">
-          Top Resources
-        </h2>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.topResources}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="title" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="downloads" fill="#9333ea" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* User Analytics */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          User Analytics
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-purple-900">Total Users</h3>
-            <p className="text-3xl font-bold text-purple-600">
-              {data.totalUsers}
-            </p>
-          </div>
-          <div className="bg-red-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-red-900">
-              Restricted Users
-            </h3>
-            <p className="text-3xl font-bold text-red-600">
-              {/* Assuming you have a way to fetch restricted users */}0
-            </p>
-          </div>
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-yellow-900">
-              Banned Users
-            </h3>
-            <p className="text-3xl font-bold text-yellow-600">
-              {/* Assuming you have a way to fetch banned users */}0
-            </p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-blue-900">
-              Total Restrictions
-            </h3>
-            <p className="text-3xl font-bold text-blue-600">
-              {/* Assuming you have a way to fetch total restrictions */}0
-            </p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-green-900">Total Bans</h3>
-            <p className="text-3xl font-bold text-green-600">
-              {/* Assuming you have a way to fetch total bans */}0
-            </p>
-          </div>
-          <div className="bg-indigo-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium text-indigo-900">
-              Total Warnings
-            </h3>
-            <p className="text-3xl font-bold text-indigo-600">
-              {/* Assuming you have a way to fetch total warnings */}0
-            </p>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-green-900">Total Bans</h3>
+              <p className="text-3xl font-bold text-green-600">
+                {/* Assuming you have a way to fetch total bans */}0
+              </p>
+            </div>
+            <div className="bg-indigo-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-indigo-900">
+                Total Warnings
+              </h3>
+              <p className="text-3xl font-bold text-indigo-600">
+                {/* Assuming you have a way to fetch total warnings */}0
+              </p>
+            </div>
           </div>
         </div>
       </div>

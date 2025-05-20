@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,6 +21,7 @@ import ResourcesLibrary from "./pages/ResourceSub/ResourcesLibrary";
 import ResourcesPQ from "./pages/ResourceSub/ResourcesPQ";
 import { useAuthStore } from "./stores/authStore";
 import Schedule from "./pages/Schedule";
+import Planner from "./pages/Planner";
 import AdminEvents from "./pages/admin/AdminEvents";
 import Homepage from "./pages/Homepage/page";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -29,6 +30,7 @@ import AdminForum from "./pages/admin/AdminForum";
 import AdminResources from "./pages/admin/AdminResources";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import UploadResources from "./pages/admin/UploadResources";
+import OrientationFAQs from "./pages/OrientationSub/OrientationFAQs";
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore();
@@ -50,14 +52,6 @@ function App() {
     initializeAuth();
   }, [initializeAuth]);
 
-  const [events, setEvents] = useState([]);
-
-  /*Added Code*/
-  const handleAddEvent = (newEvent) => {
-    setEvents([events, newEvent]);
-  };
-  /*End of Added. Please link to db*/
-
   return (
     <Router>
       <Routes>
@@ -71,11 +65,12 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat-forum" element={<ChatForum />} />
-          <Route path="/schedule" element={<Schedule events={events} />} /> {/*Added events={events}*/}
-          <Route path="/adminevent" element={<AdminEvents onAddEvent={handleAddEvent} />} /> {/*This is the added file for the admin page*/}
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/planner" element={<Planner />} />
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/orientationguide" element={<OrientationGuide />} />
           <Route path="/orientationvids" element={<OrientationVids />} />
+          <Route path="/orientationfaqs" element={<OrientationFAQs />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resourceslibrary" element={<ResourcesLibrary />} />
           <Route path="/resourcespq" element={<ResourcesPQ />} />
@@ -94,6 +89,7 @@ function App() {
           <Route path="resources" element={<AdminResources />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="upload-resources" element={<UploadResources />} />
+          <Route path="events" element={<AdminEvents />} />
         </Route>
       </Routes>
     </Router>

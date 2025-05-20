@@ -1,105 +1,114 @@
-import React from 'react';
-import { Link } from "react-router-dom";
-import { ArrowDownCircle, ArrowRight, Search } from 'lucide-react';
-import SidebarO from './SidebarO';
+import React, { useState } from "react";
+import OrientationLayout from "./OrientationLayout";
+
+const checklistSteps = [
+  {
+    title: "About the Campus",
+    description:
+      "Learn about the campus layout, facilities, and important locations.",
+    details:
+      "The campus includes libraries, cafeterias, lecture halls, and recreational areas. Maps are available at the main entrance and online.",
+  },
+  {
+    title: "How to Use Student Portals",
+    description:
+      "Instructions on accessing and using the student portal for results, registration, and more.",
+    details:
+      "Log in with your student credentials. You can check your results, register for courses, and access announcements.",
+  },
+  {
+    title: "Key Departments",
+    description: "Overview of key departments and their contact information.",
+    details:
+      "Departments include Academic Affairs, Student Services, IT Support, and more. Contact info is available on the university website.",
+  },
+  {
+    title: "Clubs and Activities",
+    description:
+      "Explore clubs, societies, and extracurricular activities available on campus.",
+    details:
+      "Join clubs to meet new people and develop skills. Activities are announced on the student portal and notice boards.",
+  },
+];
 
 export default function OrientationGuide() {
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const filteredSteps = checklistSteps.filter(
+    (step) =>
+      step.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      step.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleToggle = (idx: number) => {
+    setOpenIndex(openIndex === idx ? null : idx);
+  };
+
   return (
-
-    <div className='container flex flex-wrap'>
-      <SidebarO/>
-
-      <div className='container m-auto pb-2 bg-violet-50 md:relative left-28'>
-        <div className='sticky top-0'>
-          <div className='p-3.5 bg-violet-300 w-full flex items-center'>
-            <input type='text' placeholder='Search' className='mx-2 p-2 w-1/2 xl:w-4/5'/>
-            <Search className='w-10 h-10'/>
+    <OrientationLayout>
+      <div className=" bg-gray-50 pb-4">
+        <div className="flex items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Orientation Checklist
+          </h1>
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search steps..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <svg
+                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
-
-        <div className='mx-8 my-2'>
-          <p className='text-3xl font-serif text-black py-3'>Orientation Checklist</p>
-          
-          <div className='mb-5'>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
-              <p className='text-xl col-start-1'><b>Step 1:</b> About the Campus</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
-              <p className='text-xl col-start-1'><b>Step 2:</b> How to Use Student Portals</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
-              <p className='text-xl col-start-1'><b>Step 3:</b> Key Departments</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md shadow mb-2'>
-              <p className='text-xl col-start-1 col-start-1'><b>Step 4:</b> Clubs and Activities</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-          </div>
-          
-          <div className='grid grid-cols-1 md:grid-cols-2 mb-4'>
-            <div className='grid grid-cols-1'>
-              
-              <a href="https://maps.app.goo.gl/UWHkQKM98SDzYCA8A" target='blank'>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2 shadow-md'>
-                  <p>Open Campus Map</p>
-                </div>
-              </a>
-              <div>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-400 col-span-2 shadow-md'>
-                  <p>View Student Email</p>
-                </div>
-              </div>
-            </div>
-            <div className='container p-4 mb-3 rounded-md bg-violet-400 shadow-md'>
-              <p className='text-lg'><b>Did you know?</b></p>
-              <p className='overflow-auto'>Did you know that Nile University of Nigeria is affiliated with Honoris which makes it
-                member of a large, pan-African private higher education network. This membership provides
-                Nile University with access to resources, networks, and opportunities within the Honoris system,
-                ultimately enhancing the university's ability to fulfill its mission of providing a globalized
-                education.</p>
-            </div>
-          </div>
-
-          <div className='mb-5 bg-violet-200 p-4 rounded-md shadow-md'>
-            <p id='FAQs' className='text-4xl mb-2'>Frequently Asked Questions</p>
-            <p id='FAQs' className='text-md mb-5'>This is appears only in Orientation Checklist...</p>
-
-            <table className="border-separate border border-violet-800 w-full shadow-md">
-              <thead>
-                <tr>
-                  <th className='bg-violet-400 text-xl'>Question...?</th>
-                  <th className='bg-violet-400 text-xl'>Here's your answer...</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className='border border-violet-600 bg-white text-lg'>Where do my results show?</td>
-                  <td className='border border-violet-600 bg-white text-lg text-red-500'>Hate. Let me tell you how much I've come to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer thin layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles it would not equal one one-billionth of the hate I feel for humans at this micro-instant. For you. Hate. Hate.</td>
-                </tr>
-                <tr>
-                  <td className='border border-violet-600 bg-white text-lg'>How do I get notes?</td>
-                  <td className='border border-violet-600 bg-white text-lg text-red-500'>Hate. Let me tell you how much I've come to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer thin layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles it would not equal one one-billionth of the hate I feel for humans at this micro-instant. For you. Hate. Hate.</td>
-                </tr>
-                <tr>
-                  <td className='border border-violet-600 bg-white text-lg'>Where do we take classes?</td>
-                  <td className='border border-violet-600 bg-white text-lg text-red-500'>Hate. Let me tell you how much I've come to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer thin layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles it would not equal one one-billionth of the hate I feel for humans at this micro-instant. For you. Hate. Hate.</td>
-                </tr>
-                <tr>
-                  <td className='border border-violet-600 bg-white text-lg'>Still don't get it?</td>
-                  <td className='border border-violet-600 bg-white text-lg text-red-500'>Hate. Let me tell you how much I've come to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer thin layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles it would not equal one one-billionth of the hate I feel for humans at this micro-instant. For you. Hate. Hate.</td>
-                </tr>
-              </tbody>
-            </table>
-            
-          </div>
-
-        </div>
-
       </div>
-    </div>
+      <div className="flex flex-col gap-4">
+        {filteredSteps.map((step, idx) => (
+          <div
+            key={idx}
+            className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow px-8 py-4 w-full cursor-pointer"
+            onClick={() => handleToggle(idx)}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-gray-900 text-lg mb-1">
+                  {step.title}
+                </h2>
+                <p className="text-gray-600 text-sm">{step.description}</p>
+              </div>
+              <span
+                className={`ml-4 text-purple-500 text-2xl transition-transform ${
+                  openIndex === idx ? "rotate-90" : ""
+                }`}
+              >
+                &#9654;
+              </span>
+            </div>
+            {openIndex === idx && (
+              <div className="mt-4 border-t pt-4 text-gray-700 text-sm">
+                {step.details}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </OrientationLayout>
   );
 }

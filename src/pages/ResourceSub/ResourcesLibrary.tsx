@@ -1,86 +1,152 @@
-import React from 'react';
-import SidebarR from './SidebarR';
-import {Search, ArrowRight} from 'lucide-react'
+import React, { useEffect, useState } from "react";
+import SidebarR from "./SidebarR";
+import { Search, FileText, Download, BookOpen } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useAuthStore } from "../../stores/authStore";
+
+interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  file_type: string;
+  department: string;
+  created_at: string;
+}
 
 export default function ResourcesLibrary() {
-  
-  return (
-    <div className='container flex flex-wrap'>
-      <SidebarR/>
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuthStore();
 
-      <div className='container m-auto pb-2 bg-violet-50 md:relative left-28'>
-        <div className='sticky top-0'>
-          <div className='p-3.5 bg-violet-300 w-full flex items-center'>
-            <input type='text' placeholder='Search' className='mx-2 p-2 w-1/2 xl:w-4/5'/>
-            <Search className='w-10 h-10'/>
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  const fetchResources = async () => {
+    try {
+      setLoading(true);
+      const { data: userData, error: userError } = await supabase
+        .from("profiles")
+        .select("department_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (userError) throw userError;
+
+      const { data, error } = await supabase
+        .from("lecture_resources")
+        .select("*")
+        .eq("department_id", userData.department_id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setResources(data || []);
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredResources = resources.filter(
+    (resource) =>
+      resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getFileIcon = (fileType: string | undefined | null) => {
+    if (!fileType || typeof fileType !== "string") {
+      return <BookOpen className="h-6 w-6 text-purple-500" />;
+    }
+    switch (fileType.toLowerCase()) {
+      case "pdf":
+        return <FileText className="h-6 w-6 text-red-500" />;
+      case "doc":
+      case "docx":
+        return <FileText className="h-6 w-6 text-blue-500" />;
+      default:
+        return <BookOpen className="h-6 w-6 text-purple-500" />;
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      <SidebarR />
+
+      <div className="flex-1 ml-64 p-8">
+        <div className="sticky top-0 z-10 bg-gray-50 pb-4">
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Resource Library
+            </h1>
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search resources..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className='mx-8 my-2'>
-          <p className='text-3xl font-serif text-black py-3'>Orientation Checklist</p>
-          
-          <div className='mb-5'>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'><b>Step 1:</b> About the Campus</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'><b>Step 2:</b> How to Use Student Portals</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'><b>Step 3:</b> Key Departments</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1 col-start-1'><b>Step 4:</b> Clubs and Activities</p>
-              <ArrowRight className='col-start-3'/>
-            </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
           </div>
-          
-          <div className='grid grid-cols-1 md:grid-cols-2 mb-4'>
-            <div className='grid grid-cols-1'>
-              
-              <a href="https://maps.app.goo.gl/UWHkQKM98SDzYCA8A" target='blank'>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-300 col-span-2'>
-                  <p>Open Campus Map</p>
+        ) : filteredResources.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No resources found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredResources.map((resource) => (
+              <div
+                key={resource.id}
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    {getFileIcon(resource.file_type)}
+                    <h3 className="font-semibold text-gray-900">
+                      {resource.title}
+                    </h3>
+                  </div>
+                  <a
+                    href={resource.file_url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Download"
+                  >
+                    <Download className="h-5 w-5 text-gray-500" />
+                  </a>
                 </div>
-              </a>
-              <div>
-                <div className='container w-max p-4 mb-3 rounded-md bg-violet-300 col-span-2'>
-                  <p>View Student Email</p>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {resource.description}
+                </p>
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>
+                    {resource.file_type &&
+                    typeof resource.file_type === "string"
+                      ? resource.file_type.toUpperCase()
+                      : "N/A"}
+                  </span>
+                  <span>
+                    {new Date(resource.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
-
-            </div>
-            <div className='container p-4 mb-3 rounded-md bg-violet-300'>
-              <p className='text-lg'><b>Did you know?</b></p>
-              <p className='overflow-auto'>Did you know that Nile University of Nigeria is affiliated with Honoris which makes it
-                member of a large, pan-African private higher education network. This membership provides
-                Nile University with access to resources, networks, and opportunities within the Honoris system,
-                ultimately enhancing the university's ability to fulfill its mission of providing a globalized
-                education.</p>
-            </div>
+            ))}
           </div>
-
-          <div className='mb-5 bg-violet-200 p-4'>
-            <p id='FAQs' className='text-4xl mb-5'>Frequently Asked Questions</p>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'>Where do my results show?</p>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'>How do I get notes?</p>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1'>Where do we take classes?</p>
-            </div>
-            <div className='container w-full p-4 grid grid-cols-2 bg-white rounded-md mb-2'>
-              <p className='text-xl col-start-1 col-start-1'>Still don't get it?</p>
-            </div>
-          </div>
-
-        </div>
-
+        )}
       </div>
     </div>
   );
