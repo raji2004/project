@@ -7,7 +7,9 @@ interface EventsAdminStore {
   loading: boolean;
   error: string;
   fetchEvents: () => Promise<void>;
-  createEvent: (event: Omit<Event, "id" | "created_at">) => Promise<void>;
+  createEvent: (
+    event: Omit<Event, "id" | "created_at" | "updated_at">
+  ) => Promise<void>;
   editEvent: (id: string, updates: Partial<Event>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
 }
@@ -23,7 +25,7 @@ export const useEventsAdminStore = create<EventsAdminStore>((set, get) => ({
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("start", { ascending: true });
       if (error) throw error;
       set({ events: data || [] });
     } catch (err: unknown) {

@@ -2,9 +2,10 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: string;
-  time: string;
+  start: string;
+  end: string;
   location: string;
-  departments: string[];
+  type: "lecture" | "exam" | "assignment" | "other";
   created_at: string;
+  updated_at: string;
 }

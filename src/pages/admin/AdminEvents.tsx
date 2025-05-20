@@ -15,11 +15,11 @@ export default function AdminEvents() {
     useEventsAdminStore();
   const [newEvent, setNewEvent] = useState<Partial<Event>>({
     title: "",
-    date: "",
-    time: "",
     description: "",
+    start: "",
+    end: "",
     location: "",
-    departments: [],
+    type: "other",
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -61,26 +61,23 @@ export default function AdminEvents() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const eventToInsert: Omit<Event, "id" | "created_at"> = {
+      const eventToInsert = {
         title: newEvent.title || "",
         description: newEvent.description || "",
-        date: newEvent.date || "",
-        time: newEvent.time || "",
+        start: newEvent.start || "",
+        end: newEvent.end || "",
         location: newEvent.location || "",
-        departments:
-          newEvent.departments && newEvent.departments.length > 0
-            ? newEvent.departments
-            : departments.map((d: Department) => d.name),
+        type: newEvent.type || "other",
       };
       await createEvent(eventToInsert);
       toast.success("Event created successfully");
       setNewEvent({
         title: "",
-        date: "",
-        time: "",
         description: "",
+        start: "",
+        end: "",
         location: "",
-        departments: [],
+        type: "other",
       });
       fetchEvents();
     } catch (err) {
@@ -107,13 +104,10 @@ export default function AdminEvents() {
       const updates: Partial<Event> = {
         title: editingEvent.title,
         description: editingEvent.description,
-        date: editingEvent.date,
-        time: editingEvent.time,
+        start: editingEvent.start,
+        end: editingEvent.end,
         location: editingEvent.location,
-        departments:
-          editingEvent.departments && editingEvent.departments.length > 0
-            ? editingEvent.departments
-            : departments.map((d: Department) => d.name),
+        type: editingEvent.type,
       };
       await editEvent(editingEvent.id, updates);
       toast.success("Event updated successfully");
@@ -205,24 +199,28 @@ export default function AdminEvents() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-2">Date</label>
+              <label className="block text-sm font-semibold mb-2">
+                Start Date & Time
+              </label>
               <input
-                type="date"
-                value={newEvent.date}
+                type="datetime-local"
+                value={newEvent.start}
                 onChange={(e) =>
-                  setNewEvent({ ...newEvent, date: e.target.value })
+                  setNewEvent({ ...newEvent, start: e.target.value })
                 }
                 className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-2">Time</label>
+              <label className="block text-sm font-semibold mb-2">
+                End Date & Time
+              </label>
               <input
-                type="time"
-                value={newEvent.time}
+                type="datetime-local"
+                value={newEvent.end}
                 onChange={(e) =>
-                  setNewEvent({ ...newEvent, time: e.target.value })
+                  setNewEvent({ ...newEvent, end: e.target.value })
                 }
                 className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
                 required
@@ -243,59 +241,23 @@ export default function AdminEvents() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Departments
-              </label>
-              <div className="relative" ref={deptDropdownRef}>
-                <button
-                  type="button"
-                  className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none flex justify-between items-center"
-                  onClick={() => setDeptDropdownOpen((v) => !v)}
-                >
-                  {newEvent.departments &&
-                  newEvent.departments.length === departments.length
-                    ? "All Departments"
-                    : newEvent.departments && newEvent.departments.length > 0
-                    ? newEvent.departments.join(", ")
-                    : "Select departments..."}
-                  <span className="ml-2">▼</span>
-                </button>
-                {deptDropdownOpen && (
-                  <div className="absolute z-30 mt-2 w-full bg-white border border-purple-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    <div
-                      className="px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
-                      onClick={() => toggleAllDepartments(false)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={
-                          newEvent.departments &&
-                          newEvent.departments.length === departments.length
-                        }
-                        readOnly
-                      />
-                      <span>All Departments</span>
-                    </div>
-                    {departments.map((dept) => (
-                      <div
-                        key={dept.name}
-                        className="px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
-                        onClick={() => toggleDepartment(dept.name, false)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={newEvent.departments?.includes(dept.name)}
-                          readOnly
-                        />
-                        <span>{dept.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Click to select multiple departments.
-              </div>
+              <label className="block text-sm font-semibold mb-2">Type</label>
+              <select
+                value={newEvent.type}
+                onChange={(e) =>
+                  setNewEvent({
+                    ...newEvent,
+                    type: e.target.value as Event["type"],
+                  })
+                }
+                className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                required
+              >
+                <option value="lecture">Lecture</option>
+                <option value="exam">Exam</option>
+                <option value="assignment">Assignment</option>
+                <option value="other">Other</option>
+              </select>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold mb-2">
@@ -355,13 +317,16 @@ export default function AdminEvents() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">
-                    Date
+                    Start Date & Time
                   </label>
                   <input
-                    type="date"
-                    value={editingEvent.date}
+                    type="datetime-local"
+                    value={editingEvent.start}
                     onChange={(e) =>
-                      setEditingEvent({ ...editingEvent, date: e.target.value })
+                      setEditingEvent({
+                        ...editingEvent,
+                        start: e.target.value,
+                      })
                     }
                     className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
                     required
@@ -369,13 +334,16 @@ export default function AdminEvents() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">
-                    Time
+                    End Date & Time
                   </label>
                   <input
-                    type="time"
-                    value={editingEvent.time}
+                    type="datetime-local"
+                    value={editingEvent.end}
                     onChange={(e) =>
-                      setEditingEvent({ ...editingEvent, time: e.target.value })
+                      setEditingEvent({
+                        ...editingEvent,
+                        end: e.target.value,
+                      })
                     }
                     className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
                     required
@@ -400,62 +368,24 @@ export default function AdminEvents() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">
-                    Departments
+                    Type
                   </label>
-                  <div className="relative" ref={deptDropdownRef}>
-                    <button
-                      type="button"
-                      className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none flex justify-between items-center"
-                      onClick={() => setDeptDropdownOpen((v) => !v)}
-                    >
-                      {editingEvent.departments &&
-                      editingEvent.departments.length === departments.length
-                        ? "All Departments"
-                        : editingEvent.departments &&
-                          editingEvent.departments.length > 0
-                        ? editingEvent.departments.join(", ")
-                        : "Select departments..."}
-                      <span className="ml-2">▼</span>
-                    </button>
-                    {deptDropdownOpen && (
-                      <div className="absolute z-30 mt-2 w-full bg-white border border-purple-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        <div
-                          className="px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
-                          onClick={() => toggleAllDepartments(true)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={
-                              editingEvent.departments &&
-                              editingEvent.departments.length ===
-                                departments.length
-                            }
-                            readOnly
-                          />
-                          <span>All Departments</span>
-                        </div>
-                        {departments.map((dept) => (
-                          <div
-                            key={dept.name}
-                            className="px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
-                            onClick={() => toggleDepartment(dept.name, true)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={editingEvent.departments?.includes(
-                                dept.name
-                              )}
-                              readOnly
-                            />
-                            <span>{dept.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Click to select multiple departments.
-                  </div>
+                  <select
+                    value={editingEvent.type}
+                    onChange={(e) =>
+                      setEditingEvent({
+                        ...editingEvent,
+                        type: e.target.value as Event["type"],
+                      })
+                    }
+                    className="w-full p-3 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                    required
+                  >
+                    <option value="lecture">Lecture</option>
+                    <option value="exam">Exam</option>
+                    <option value="assignment">Assignment</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">
@@ -510,30 +440,17 @@ export default function AdminEvents() {
                     <span className="text-lg font-semibold text-gray-900">
                       {event.title}
                     </span>
+                    <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold capitalize">
+                      {event.type}
+                    </span>
                   </div>
-                  <div className="text-gray-600 mb-1 truncate">
-                    {event.description}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {event.departments &&
-                      event.departments.length > 0 &&
-                      event.departments.map((dept) => (
-                        <span
-                          key={dept}
-                          className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold"
-                        >
-                          {dept}
-                        </span>
-                      ))}
-                  </div>
+                  <div className="text-gray-600 mb-2">{event.description}</div>
                   <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" /> {event.location}
                     </span>
-                    <span>
-                      Date: {new Date(event.date).toLocaleDateString()}
-                    </span>
-                    <span>Time: {event.time}</span>
+                    <span>Start: {new Date(event.start).toLocaleString()}</span>
+                    <span>End: {new Date(event.end).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="flex flex-row md:flex-col gap-2 md:items-end">
