@@ -54,6 +54,10 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
     description: string | null;
     file: File;
     type: "pdf" | "video" | "link";
+    resource_type?: "resource" | "past_question";
+    year?: number;
+    course?: string;
+    semester?: string;
   }) => {
     set({ loading: true, error: null });
     try {
@@ -83,6 +87,10 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
             description: resource.description,
             url: publicUrl,
             type: resource.type,
+            resource_type: resource.resource_type || "resource",
+            year: resource.year || null,
+            course: resource.course || null,
+            semester: resource.semester || null,
           },
         ]);
 

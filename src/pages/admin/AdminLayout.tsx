@@ -8,13 +8,15 @@ import {
   LogOut,
   Menu,
   X,
+  Calendar,
 } from "lucide-react";
 
 const navItems = [
-  { path: "/admin/analytics", icon: BarChart3,    label: "Analytics" },
-  { path: "/admin/users",     icon: Users,         label: "Users"     },
-  { path: "/admin/resources", icon: FileText,     label: "Resources" },
-  { path: "/admin/forum",     icon: MessageSquare, label: "Forum"     },
+  { path: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+  { path: "/admin/users", icon: Users, label: "Users" },
+  { path: "/admin/resources", icon: FileText, label: "Resources" },
+  { path: "/admin/forum", icon: MessageSquare, label: "Forum" },
+  { path: "/admin/events", icon: Calendar, label: "Events" },
 ];
 
 export const AdminLoadingContext = createContext<{
@@ -25,7 +27,7 @@ export const AdminLoadingContext = createContext<{
 export default function AdminLayout() {
   const location = useLocation();
   const [globalLoading, setGlobalLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen]       = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <AdminLoadingContext.Provider value={{ setGlobalLoading, globalLoading }}>
@@ -57,7 +59,9 @@ export default function AdminLayout() {
         >
           <div className="flex flex-col h-full">
             <div className="p-6 flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-purple-700">Admin Panel</h1>
+              <h1 className="text-2xl font-bold text-purple-700">
+                Admin Panel
+              </h1>
               <button
                 className="md:hidden p-2"
                 onClick={() => setSidebarOpen(false)}
@@ -76,9 +80,11 @@ export default function AdminLayout() {
                     to={path}
                     className={`
                       flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                      ${isActive
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"}
+                      ${
+                        isActive
+                          ? "bg-purple-100 text-purple-700"
+                          : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
+                      }
                     `}
                     onClick={() => setSidebarOpen(false)}
                   >

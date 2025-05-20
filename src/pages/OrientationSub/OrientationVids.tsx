@@ -1,103 +1,117 @@
-import React from 'react';
-import { Link } from "react-router-dom";
-import {ArrowUpRightFromSquare, Search, } from 'lucide-react'
-import SidebarO from './SidebarO';
+import React, { useState } from "react";
+import SidebarO from "./SidebarO";
+
+const orientationVideos = [
+  {
+    title: "Nile Hostel Offerings",
+    description: "A look at the hostel facilities and accommodation options.",
+    videoUrl: "https://www.youtube.com/embed/y-S9-U8n9eY",
+  },
+  {
+    title: "Nile Fashion Week",
+    description: "Highlights from the annual fashion week event.",
+    videoUrl: "https://www.youtube.com/embed/aZVKGiBWDSI",
+  },
+  {
+    title: "How to Apply",
+    description: "A step-by-step guide to the application process.",
+    videoUrl: "https://www.youtube.com/embed/MmJc-8M4HG4",
+  },
+  {
+    title: "Why Nile University?",
+    description: "Discover what makes Nile University unique.",
+    videoUrl: "https://www.youtube.com/embed/FcGcgPuP844",
+  },
+  {
+    title: "Rules of the Hostel",
+    description: "Important rules and guidelines for hostel residents.",
+    videoUrl: "https://www.youtube.com/embed/WDTaFYQugf0",
+  },
+  {
+    title: "Tour of Nile University",
+    description: "A virtual tour of the campus and its facilities.",
+    videoUrl: "https://www.youtube.com/embed/mWo1apygv6o",
+  },
+];
 
 export default function OrientationVids() {
-  
-  return (
-    <div className='container flex flex-wrap'>
-      <SidebarO/>
+  const [searchQuery, setSearchQuery] = useState("");
 
-      <div className='container m-auto pb-2 bg-violet-50 md:relative left-28'>
-        <div className='sticky top-0'>
-          <div className='p-3.5 bg-violet-300 w-full flex items-center'>
-            <input type='text' placeholder='Search' className='mx-2 p-2 w-1/2 xl:w-4/5'/>
-            <Search className='w-10 h-10'/>
+  const filteredVideos = orientationVideos.filter(
+    (vid) =>
+      vid.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vid.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      <SidebarO />
+      <div className="flex-1 ml-64 p-8">
+        <div className="sticky top-0 z-10 bg-gray-50 pb-4">
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Orientation Videos
+            </h1>
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search videos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className='mx-8 my-2'>
-          <p className='text-3xl font-serif text-black py-3'>Videos</p>
-          
-          <div className='mb-5 grid grid-cols-3 gap-2'>
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/FLpn1u333U8?si=i0jHfIyQ87IIbqB0" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Fresher's Orientation week 2024</p>
-                <a href='https://youtu.be/FLpn1u333U8?si=cOWYoR-KDu4w4Lpk' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredVideos.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+              No videos found.
             </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/y-S9-U8n9eY?si=9rmBxs97hRsUbloE" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Nile Hostel Offerings</p>
-                <a href='https://youtu.be/y-S9-U8n9eY?si=DAuWAhehr3yaWlrx' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
+          ) : (
+            filteredVideos.map((vid, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow px-8 py-4 w-full flex flex-col md:flex-row items-center gap-6"
+              >
+                <div className="flex-shrink-0 w-full md:w-1/2">
+                  <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                    <iframe
+                      width="100%"
+                      height="200"
+                      src={vid.videoUrl}
+                      title={vid.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-semibold text-gray-900 text-lg mb-1">
+                    {vid.title}
+                  </h2>
+                  <p className="text-gray-600 text-sm">{vid.description}</p>
+                </div>
               </div>
-            </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/aZVKGiBWDSI?si=SwJ0FFknHTQvQjIl" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Nile Fashion Week</p>
-                <a href='https://youtu.be/aZVKGiBWDSI?si=SwJ0FFknHTQvQjIl' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
-            </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/MmJc-8M4HG4?si=KBPihXWokD3pjUWg" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>How to apply</p>
-                <a href='https://youtu.be/MmJc-8M4HG4?si=KBPihXWokD3pjUWg' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
-            </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/FcGcgPuP844?si=-YhwLg3GLyCnVNi2" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Why Nile University?</p>
-                <a href='https://youtu.be/FcGcgPuP844?si=r_bwuDgsAed5fkrF' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
-            </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/WDTaFYQugf0?si=t6WW8nvFIeAPKaT6" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Rules of the Hostel</p>
-                <a href='https://youtu.be/WDTaFYQugf0?si=t6WW8nvFIeAPKaT6' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
-            </div>
-
-            <div className='container w-max p-4 bg-violet-200 rounded-md shadow-md mb-2'>
-              <iframe className='p-4' src="https://www.youtube.com/embed/mWo1apygv6o?si=EHpQnTqbdCrLBuP3" 
-              title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-              gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-              
-              <div className='flex items-center justify-center p-4 bg-violet-100'>
-                <p className='text-xl'>Tour of Nile University</p>
-                <a href='https://youtu.be/mWo1apygv6o?si=EHpQnTqbdCrLBuP3' target='blank'><ArrowUpRightFromSquare className='m-1 w-6 h-6'/></a>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>

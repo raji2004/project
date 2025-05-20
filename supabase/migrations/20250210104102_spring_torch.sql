@@ -37,7 +37,11 @@ CREATE TABLE IF NOT EXISTS lecture_resources (
   description text,
   url text NOT NULL,
   type text NOT NULL,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  resource_type text DEFAULT 'resource',
+  year int,
+  course text,
+  semester text
 );
 
 -- Enable RLS
