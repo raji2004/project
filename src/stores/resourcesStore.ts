@@ -33,7 +33,7 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
         .from("lecture_resources")
         .select("*")
         .eq("department_id", departmentId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }).limit(3);
 
       if (error) throw error;
       set({ resources: data });
