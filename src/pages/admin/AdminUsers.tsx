@@ -11,6 +11,7 @@ import {
   Unlock,
   User as UserIcon,
   Users,
+  Trash2,
 } from "lucide-react";
 import { getAvatarUrl } from "../../utils/avatar";
 import { useUsersAdminStore } from "./stores/usersAdminStore";
@@ -25,8 +26,10 @@ export default function AdminUsers() {
     updateUserRole,
     addWarning,
     restrictUser,
+    deleteUser,
     fetchUserAnalytics,
   } = useUsersAdminStore();
+  
   const [search, setSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function AdminUsers() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeAction, setActiveAction] = useState<{
     userId: string;
-    type: "restrict" | "hide" | "warning" | null;
+    type: "restrict" | "hide" | "warning" | "delete" | null;
   } | null>(null);
   const [actionReason, setActionReason] = useState("");
 
@@ -67,6 +70,7 @@ export default function AdminUsers() {
         <h1 className="text-3xl font-extrabold mb-8 text-purple-700 flex items-center gap-2">
           <Users className="h-7 w-7 text-purple-500" /> User Management
         </h1>
+        
         <div className="max-w-5xl w-full space-y-6">
           {/* Search */}
           <div className="relative max-w-xs">
@@ -208,24 +212,64 @@ export default function AdminUsers() {
                     >
                       <AlertTriangle className="h-5 w-5" />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveAction({ userId: user.id, type: "delete" })
+                      }
+                      className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete user"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Warning Input */}
+                {/* Action Input */}
                 {activeAction && activeAction.userId === user.id && (
                   <div className="mt-4 p-4 bg-yellow-50 rounded-md">
-                    <input
-                      type="text"
-                      value={actionReason}
-                      onChange={(e) => setActionReason(e.target.value)}
-                      placeholder={
-                        activeAction.type === "restrict"
-                          ? "Reason for restriction..."
-                          : "Enter warning reason..."
-                      }
-                      className="w-full rounded-md border border-yellow-200 px-4 py-2 bg-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                    />
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {activeAction.type === "delete" ? "Delete Type:" : "Reason:"}
+                      </label>
+                      {activeAction.type === "delete" && (
+                        <div className="flex gap-2 mb-2">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="deleteType"
+                              value="normal"
+                              defaultChecked
+                              className="mr-2"
+                            />
+                            Normal Delete
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="deleteType"
+                              value="restrictive"
+                              className="mr-2"
+                            />
+                            Restrictive Delete (Ban Email)
+                          </label>
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        value={actionReason}
+                        onChange={(e) => setActionReason(e.target.value)}
+                        placeholder={
+                          activeAction.type === "restrict"
+                            ? "Reason for restriction..."
+                            : activeAction.type === "warning"
+                            ? "Enter warning reason..."
+                            : "Enter deletion reason..."
+                        }
+                        className="w-full rounded-md border border-yellow-200 px-4 py-2 bg-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -243,40 +287,35 @@ export default function AdminUsers() {
                             return;
                           }
                           setActionLoading(user.id);
-                          if (activeAction.type === "restrict") {
-                            console.log(
-                              "[DEBUG] About to create notification for restrict",
-                              user.id,
-                              actionReason
-                            );
-                            await restrictUser(
-                              user.id,
-                              !user.is_restricted,
-                              actionReason
-                            );
-                            await addWarning(user.id, actionReason);
-                            console.log(
-                              "[DEBUG] Finished createNotification for restrict"
-                            );
-                          } else if (activeAction.type === "warning") {
-                            console.log(
-                              "[DEBUG] About to create notification for warning",
-                              user.id,
-                              actionReason
-                            );
-                            await addWarning(user.id, actionReason);
-                            console.log(
-                              "[DEBUG] Finished createNotification for warning"
-                            );
+                          
+                          try {
+                            if (activeAction.type === "restrict") {
+                              await restrictUser(
+                                user.id,
+                                !user.is_restricted,
+                                actionReason
+                              );
+                              await addWarning(user.id, actionReason);
+                            } else if (activeAction.type === "warning") {
+                              await addWarning(user.id, actionReason);
+                            } else if (activeAction.type === "delete") {
+                              const deleteType = document.querySelector('input[name="deleteType"]:checked') as HTMLInputElement;
+                              const isRestrictive = deleteType?.value === "restrictive";
+                              await deleteUser(user.id, isRestrictive, actionReason);
+                            }
+                          } catch (error) {
+                            console.error("Action failed:", error);
                           }
+                          
                           setActionReason("");
                           setActiveAction(null);
                           setActionLoading(null);
-                          await fetchUsers();
                         }}
-                        className="px-3 py-1 text-sm bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+                        className={`px-3 py-1 text-sm text-white rounded-md hover:opacity-90 ${
+                          activeAction.type === "delete" ? "bg-red-600" : "bg-yellow-600"
+                        }`}
                       >
-                        Confirm
+                        {activeAction.type === "delete" ? "Delete" : "Confirm"}
                       </button>
                     </div>
                   </div>

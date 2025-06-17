@@ -34,6 +34,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     fullName?: string,
     departmentId?: string
   ) => {
+    // Check if email is banned
+    const { data: banned, error: banError } = await supabase
+      .from("restricted_deleted_users")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+    if (banError) throw banError;
+    if (banned) {
+      throw new Error("This account has been banned and cannot be used to sign up.");
+    }
+
     console.log("Starting signup process...");
     const { data, error } = await supabase.auth.signUp({
       email,

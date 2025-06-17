@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../../../lib/supabase";
 import { User, UserAnalytics } from "../types/userTypes";
+import { createNotification } from "../../../utils/notifications";
 
 interface UsersAdminStore {
   users: User[];
@@ -13,6 +14,9 @@ interface UsersAdminStore {
     userId: string,
     restrict: boolean,
     reason: string
+  ) => Promise<void>;
+  deleteUser: (
+    userId: string
   ) => Promise<void>;
   fetchUserAnalytics: (userId: string) => Promise<UserAnalytics | null>;
 }
@@ -46,6 +50,20 @@ export const useUsersAdminStore = create<UsersAdminStore>((set, get) => ({
         .update({ role })
         .eq("id", userId);
       if (error) throw error;
+
+      // Create notification for the user about the role change
+      const result = await createNotification({
+        user_id: userId,
+        message: `Your role has been changed to ${role}`,
+        type: "role_change",
+      });
+      
+      if (result.success) {
+        console.log("[Role Change Notification] Created notification for user:", userId);
+      } else {
+        console.error("[Role Change Notification] Failed to create notification:", result.error);
+      }
+
       await get().fetchUsers();
     } catch (err: unknown) {
       const message =
@@ -63,6 +81,20 @@ export const useUsersAdminStore = create<UsersAdminStore>((set, get) => ({
         reason,
         created_at: new Date().toISOString(),
       });
+
+      // Create notification for the user about the warning
+      const result = await createNotification({
+        user_id: userId,
+        message: `You have received a warning: ${reason}`,
+        type: "warning",
+      });
+      
+      if (result.success) {
+        console.log("[Warning Notification] Created notification for user:", userId);
+      } else {
+        console.error("[Warning Notification] Failed to create notification:", result.error);
+      }
+
       await get().fetchUsers();
     } catch (err: unknown) {
       const message =
@@ -79,16 +111,61 @@ export const useUsersAdminStore = create<UsersAdminStore>((set, get) => ({
         .from("profiles")
         .update({ is_restricted: restrict })
         .eq("id", userId);
-      await supabase.from("notifications").insert({
+
+      // Create notification for the user about the restriction
+      const result = await createNotification({
         user_id: userId,
         message: restrict
           ? `Your account has been restricted: ${reason}`
           : `Restriction removed: ${reason}`,
+        type: "restriction",
       });
+      
+      if (result.success) {
+        console.log("[Restriction Notification] Created notification for user:", userId);
+      } else {
+        console.error("[Restriction Notification] Failed to create notification:", result.error);
+      }
+
       await get().fetchUsers();
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to restrict user";
+      set({ error: message });
+    }
+    set({ loading: false });
+  },
+
+  deleteUser: async (userId, restrict = false, reason = "") => {
+    set({ loading: true, error: "" });
+    try {
+      // Get user details before deletion
+      const { data: userData, error: fetchError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+      if (fetchError) throw fetchError;
+
+      // If restrict is true, insert into restricted_deleted_users
+      if (restrict && userData?.email) {
+        await supabase.from("restricted_deleted_users").insert({
+          email: userData.email,
+          reason,
+        });
+      }
+
+      // Delete the user from profiles
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+      if (error) throw error;
+
+      await get().fetchUsers();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete user";
       set({ error: message });
     }
     set({ loading: false });

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import type { ResourcesState } from "../types/resources";
+import { createResourceNotificationsForDepartment } from "../utils/notifications";
 
 export const useResourcesStore = create<ResourcesState>((set) => ({
   departments: [],
@@ -19,8 +20,9 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
 
       if (error) throw error;
       set({ departments: data });
-    } catch (e) {
-      set({ error: "Failed to fetch departments" });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch departments";
+      set({ error: errorMessage });
     } finally {
       set({ loading: false });
     }
@@ -37,8 +39,9 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
 
       if (error) throw error;
       set({ resources: data });
-    } catch (e) {
-      set({ error: "Failed to fetch resources" });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch resources";
+      set({ error: errorMessage });
     } finally {
       set({ loading: false });
     }
@@ -78,7 +81,7 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
       } = supabase.storage.from("lecture-resources").getPublicUrl(filePath);
 
       // Create resource record
-      const { error: insertError } = await supabase
+      const { data: insertedResource, error: insertError } = await supabase
         .from("lecture_resources")
         .insert([
           {
@@ -92,17 +95,36 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
             course: resource.course || null,
             semester: resource.semester || null,
           },
-        ]);
+        ])
+        .select()
+        .single();
 
       if (insertError) throw insertError;
+
+      // Create notifications for all users in the department
+      if (insertedResource) {
+        const message = `New ${resource.type} resource uploaded: ${resource.title}`;
+        const result = await createResourceNotificationsForDepartment(
+          resource.department_id,
+          insertedResource.id,
+          message
+        );
+        
+        if (result.success) {
+          console.log("[Resource Notification] Created", result.count, "notifications");
+        } else {
+          console.error("[Resource Notification] Failed to create notifications:", result.error);
+        }
+      }
 
       // Refresh resources list
       await useResourcesStore
         .getState()
         .fetchResourcesByDepartment(resource.department_id);
-    } catch (e) {
-      set({ error: "Failed to upload resource" });
-      throw e;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload resource";
+      set({ error: errorMessage });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -142,9 +164,10 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
       await useResourcesStore
         .getState()
         .fetchResourcesByDepartment(departmentId);
-    } catch (e) {
-      set({ error: "Failed to delete resource" });
-      throw e;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete resource";
+      set({ error: errorMessage });
+      throw error;
     } finally {
       set({ loading: false });
     }

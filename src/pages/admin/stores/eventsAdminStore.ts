@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../../../lib/supabase";
 import { Event } from "../types/eventTypes";
+import { createNotificationsForUsers, getAllUsers } from "../../../utils/notifications";
 
 interface EventsAdminStore {
   events: Event[];
@@ -39,8 +40,27 @@ export const useEventsAdminStore = create<EventsAdminStore>((set, get) => ({
   createEvent: async (event) => {
     set({ loading: true, error: "" });
     try {
-      const { error } = await supabase.from("events").insert([event]);
+      const { error } = await supabase
+        .from("events")
+        .insert([event]);
       if (error) throw error;
+
+      // Get all users and create notifications
+      const { success, users } = await getAllUsers();
+      if (success && users.length > 0) {
+        const message = `New event scheduled: ${event.title} on ${new Date(event.start).toLocaleDateString()}`;
+        const result = await createNotificationsForUsers(
+          users.map(u => u.id),
+          message
+        );
+        
+        if (result.success) {
+          console.log("[Event Notification] Created", result.count, "notifications");
+        } else {
+          console.error("[Event Notification] Failed to create notifications:", result.error);
+        }
+      }
+
       await get().fetchEvents();
     } catch (err: unknown) {
       const message =
@@ -53,11 +73,36 @@ export const useEventsAdminStore = create<EventsAdminStore>((set, get) => ({
   editEvent: async (id, updates) => {
     set({ loading: true, error: "" });
     try {
+      // Get the event before updating to know what changed
+      const { data: oldEvent, error: fetchError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from("events")
         .update(updates)
         .eq("id", id);
       if (error) throw error;
+
+      // Get all users and create notifications
+      const { success, users } = await getAllUsers();
+      if (success && users.length > 0) {
+        const message = `Event updated: ${updates.title || oldEvent.title} - ${updates.start ? `new date: ${new Date(updates.start).toLocaleDateString()}` : 'details changed'}`;
+        const result = await createNotificationsForUsers(
+          users.map(u => u.id),
+          message
+        );
+        
+        if (result.success) {
+          console.log("[Event Notification] Created", result.count, "update notifications");
+        } else {
+          console.error("[Event Notification] Failed to create update notifications:", result.error);
+        }
+      }
+
       await get().fetchEvents();
     } catch (err: unknown) {
       const message =
@@ -70,8 +115,33 @@ export const useEventsAdminStore = create<EventsAdminStore>((set, get) => ({
   deleteEvent: async (id) => {
     set({ loading: true, error: "" });
     try {
+      // Get the event before deleting to know what was deleted
+      const { data: eventToDelete, error: fetchError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase.from("events").delete().eq("id", id);
       if (error) throw error;
+
+      // Get all users and create notifications
+      const { success, users } = await getAllUsers();
+      if (success && users.length > 0) {
+        const message = `Event cancelled: ${eventToDelete.title} (was scheduled for ${new Date(eventToDelete.start).toLocaleDateString()})`;
+        const result = await createNotificationsForUsers(
+          users.map(u => u.id),
+          message
+        );
+        
+        if (result.success) {
+          console.log("[Event Notification] Created", result.count, "deletion notifications");
+        } else {
+          console.error("[Event Notification] Failed to create deletion notifications:", result.error);
+        }
+      }
+
       await get().fetchEvents();
     } catch (err: unknown) {
       const message =

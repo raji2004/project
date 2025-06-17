@@ -110,15 +110,21 @@ export default function UploadResources() {
     if (!validateForm() || !file) return;
 
     try {
+      console.log("Uploading resource with:", {
+        department_id: selectedDepartment,
+        title,
+        description: description || null,
+        file,
+        type
+      });
       await uploadResource({
         department_id: selectedDepartment,
         title,
         description: description || null,
         file,
-        type,
-        flow,
+        type
       });
-
+      console.log("Resource upload completed");
       // Reset form
       setTitle("");
       setDescription("");
