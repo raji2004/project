@@ -3,6 +3,7 @@ import { supabase } from "../../../lib/supabase";
 import { User, UserAnalytics } from "../types/userTypes";
 import { createNotification } from "../../../utils/notifications";
 
+
 interface UsersAdminStore {
   users: User[];
   loading: boolean;

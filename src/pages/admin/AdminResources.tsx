@@ -136,8 +136,9 @@ export default function AdminResources() {
           description: details.description,
           file,
           type: details.type as "pdf" | "video" | "link",
+          flow: details.flow,
+          resource_type: details.resourceType || "resource",
           url: "",
-          flow: flow,
         });
       } catch {
         anyError = true;
@@ -168,38 +169,18 @@ export default function AdminResources() {
     if (!validateForm() || !file) return;
     setUploading(true);
     try {
-      // Upload file to Supabase Storage
-      let fileUrl = "";
-      if (file) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("resources")
-          .upload(fileName, file);
-        if (uploadError) throw uploadError;
-        fileUrl = supabase.storage.from("resources").getPublicUrl(fileName)
-          .data.publicUrl;
-      }
-      // Insert into lecture_resources
-      const resourceObj = {
+      // Use the store's uploadResource function which includes notification logic
+      await uploadResource({
         department_id: selectedDepartment,
         title,
-        description,
-        url: fileUrl,
+        description: description || "",
+        file,
         type,
         flow,
-        downloads: 0,
         resource_type: resourceType,
-      };
-      console.log("[DEBUG] Single upload resource object:", resourceObj);
-      const { error: insertError } = await supabase
-        .from("lecture_resources")
-        .insert([resourceObj]);
-      if (insertError) {
-        console.error("[DEBUG] Supabase insert error (single):", insertError);
-      }
+        url: "",
+      });
+      
       setUploadSuccess("Resource uploaded successfully!");
       setTitle("");
       setDescription("");
@@ -207,6 +188,10 @@ export default function AdminResources() {
       setType("pdf");
       setFlow("resources");
       setSelectedDepartment("");
+      setResourceType("resource");
+      setYear("");
+      setCourse("");
+      setSemester("");
       fetchResources(flowFilter);
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");

@@ -134,11 +134,9 @@ export default function Register() {
       setStudentId("");
       setFullName("");
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Registration failed. Please try again."
-      );
+      const errorMessage = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -146,8 +144,17 @@ export default function Register() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Toaster position="top-center" />
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
+        <div className={`px-4 py-3 rounded flex items-center gap-2 ${
+          error.includes("banned") || error.includes("restricted") 
+            ? "bg-red-50 border border-red-200 text-red-700" 
+            : "bg-red-50 border border-red-200 text-red-600"
+        }`}>
+          {error.includes("banned") || error.includes("restricted") && (
+            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          )}
+          <span className="font-medium">{error}</span>
         </div>
       )}
       {success && (
