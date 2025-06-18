@@ -94,12 +94,18 @@ CREATE POLICY "Admins can insert deleted users"
 -- Create function to check if email is banned during registration
 CREATE OR REPLACE FUNCTION check_email_banned()
 RETURNS TRIGGER AS $$
+DECLARE
+  user_email text;
 BEGIN
-  -- Check if the email is in the banned_emails table
+  -- Get the email from auth.users table
+  SELECT email INTO user_email 
+  FROM auth.users 
+  WHERE id = NEW.id;
+  
+  -- Check if the email is in the restricted_deleted_users table (banned emails)
   IF EXISTS (
-    SELECT 1 FROM banned_emails 
-    WHERE email = NEW.email 
-    AND is_permanent = true
+    SELECT 1 FROM restricted_deleted_users 
+    WHERE email = user_email
   ) THEN
     RAISE EXCEPTION 'This email address is banned from registration';
   END IF;

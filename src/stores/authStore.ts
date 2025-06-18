@@ -6,6 +6,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
   signIn: async (email: string, password: string) => {
+    // Check if email is banned before attempting sign in
+    const { data: banned, error: banError } = await supabase
+      .from("restricted_deleted_users")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+    if (banError) throw banError;
+    if (banned) {
+      throw new Error("This account has been banned and cannot be used to sign in.");
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -31,16 +42,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     email: string,
     password: string,
     studentId: string,
-    fullName?: string,
+    fullName?: string , 
     departmentId?: string
   ) => {
-    // Check if email is banned
+    // Check if email is banned before attempting signup
     const { data: banned, error: banError } = await supabase
       .from("restricted_deleted_users")
       .select("email")
       .eq("email", email)
       .maybeSingle();
-    if (banError) throw banError;
+    if (banError) {
+      console.error("Error checking banned email:", banError);
+      throw new Error("Unable to verify email status. Please try again.");
+    }
     if (banned) {
       throw new Error("This account has been banned and cannot be used to sign up.");
     }
@@ -66,6 +80,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (error.message === "User already registered") {
         throw new Error(
           "This email is already registered. Please try logging in instead."
+        );
+      }
+      if (error.message.includes("Database error")) {
+        throw new Error(
+          "Registration failed due to a database error. Please contact support."
+        );
+      }
+      if (error.message.includes("banned from registration")) {
+        throw new Error(
+          "This email address is banned from registration."
         );
       }
       throw error;

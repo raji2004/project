@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../../../lib/supabase";
 import { Resource } from "../types/resourceTypes";
+import { createResourceNotificationsForDepartment } from "../../../utils/notifications";
 
 interface ResourcesAdminStore {
   resources: Resource[];
@@ -66,10 +67,29 @@ export const useResourcesAdminStore = create<ResourcesAdminStore>(
           flow: resource.flow,
           resource_type: resource.resource_type,
         };
-        const { error: insertError } = await supabase
+        const { data: insertedResource, error: insertError } = await supabase
           .from("lecture_resources")
-          .insert([insertObj]);
+          .insert([insertObj])
+          .select()
+          .single();
         if (insertError) throw insertError;
+
+        // Create notifications for all users in the department
+        if (insertedResource) {
+          const message = `New ${resource.type} resource uploaded: ${resource.title}`;
+          const result = await createResourceNotificationsForDepartment(
+            resource.department_id,
+            insertedResource.id,
+            message
+          );
+          
+          if (result.success) {
+            console.log("[Resource Notification] Created", result.count, "notifications");
+          } else {
+            console.error("[Resource Notification] Failed to create notifications:", result.error);
+          }
+        }
+
         await get().fetchResources("all");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Upload failed";
